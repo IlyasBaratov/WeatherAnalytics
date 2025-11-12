@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weather — FastAPI</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>How’s the sky looking today?</h1>
+
+    <form class="search" action="/" method="get">
+      <input class="search__input" type="text" name="q" placeholder="Search for a place…" />
+      <button class="btn btn--primary" type="submit">Search</button>
+    </form>
+  </header>
+
+  <main class="container">
+    <section class="layout">
+      <div class="left">
+        <article class="current card gradient">
+          <div class="current__meta">
+            <h2 class="current__place">{{ place }}</h2>
+            <p class="current__date">{{ date }}</p>
+          </div>
+          <div class="current__temp">
+            <span class="current__icon" aria-hidden="true">{{ current.icon }}</span>
+            <span class="current__value">{{ current.temp }}°</span>
+          </div>
+        </article>
+
+        <section class="stats">
+          <div class="stat card">
+            <p class="stat__label">Feels Like</p>
+            <p class="stat__value">{{ current.feels_like }}°</p>
+          </div>
+          <div class="stat card">
+            <p class="stat__label">Humidity</p>
+            <p class="stat__value">{{ current.humidity }}%</p>
+          </div>
+          <div class="stat card">
+            <p class="stat__label">Wind</p>
+            <p class="stat__value">{{ current.wind }}</p>
+          </div>
+          <div class="stat card">
+            <p class="stat__label">Precipitation</p>
+            <p class="stat__value">{{ current.precip }}</p>
+          </div>
+        </section>
+
+        <section class="daily">
+          <h3 class="section-title">Daily forecast</h3>
+          <ul class="daily__list">
+            {% for d in daily %}
+            <li class="day card">
+              <p class="day__name">{{ d.name }}</p>
+              <span class="day__icon" aria-hidden="true">{{ d.icon }}</span>
+              <p class="day__temps"><strong>{{ d.hi }}°</strong><span>{{ d.lo }}°</span></p>
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+      </div>
+
+      <aside class="right">
+        <div class="panel card">
+          <div class="panel__head">
+            <h3>Hourly forecast</h3>
+          </div>
+          <ul class="hourly">
+            {% for h in hourly %}
+            <li class="hour">
+              <span class="hour__time">{{ h.time }}</span>
+              <span class="hour__icon" aria-hidden="true">{{ h.icon }}</span>
+              <span class="hour__temp">{{ h.temp }}°</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>Built by Mr.Baratov | Collab. Islam Umarov</small>
+  </footer>
+</body>
+</html>
