@@ -37,7 +37,10 @@
       <div class="left">
         <article class="current card gradient">
           <div class="current__meta">
-            <h2 class="current__place" id="place">--</h2>
+            <div class="current__meta-row">
+              <h2 class="current__place" id="place">--</h2>
+              <button id="saveFavoriteBtn" class="btn btn--secondary" type="button" title="Save as favorite">★ Save</button>
+              </div>
             <p class="current__date" id="date">--</p>
           </div>
           <div class="current__temp">
@@ -76,6 +79,12 @@
       <aside class="right">
         <div class="panel card">
           <div class="panel__head">
+            <h3>Favorites</h3>
+            </div>
+            <ul id="favoritesList" class="favorites"></ul>
+            </div>
+            <div class="panel card">
+              <div class="panel__head">
             <h3>Hourly forecast</h3>
           </div>
           <ul class="hourly" id="hourlyList">
@@ -100,22 +109,48 @@ const searchInput = document.getElementById('searchInput');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
 const weatherContent = document.getElementById('weatherContent');
+  const favoritesList = document.getElementById('favoritesList');
+  const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
+
+  let currentPlace = null;
+  let lastQuery = null;
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Load default weather on page load
     loadWeather();
+  loadFavorites();
     
     // Handle search form submission
     searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const query = searchInput.value.trim();
+      lastQuery = query || null;
         if (query) {
             loadWeather(query);
         } else {
             loadWeather();
         }
     });
+
+  // Save favorite button
+  saveFavoriteBtn.addEventListener('click', async () => {
+    try {
+      // Prefer the explicit search query; fallback to current place label
+      const q = (searchInput.value && searchInput.value.trim()) || currentPlace;
+      if (!q) return;
+      const res = await fetch(`${API_BASE_URL}/favorites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q })
+      });
+      if (!res.ok) throw new Error('Failed to save favorite');
+      await loadFavorites();
+    } catch (err) {
+      console.error(err);
+      showError('Could not save favorite');
+    }
+  });
 });
 
 // Fetch weather data from Python backend API
@@ -162,7 +197,8 @@ async function loadWeather(query = null, lat = null, lon = null) {
 // Render weather data to the page
 function renderWeather(data) {
     // Update current weather
-    document.getElementById('place').textContent = data.place || 'Unknown';
+  currentPlace = data.place || 'Unknown';
+  document.getElementById('place').textContent = currentPlace;
     document.getElementById('date').textContent = data.date || '--';
     document.getElementById('currentIcon').textContent = data.current?.icon || '☁️';
     document.getElementById('currentTemp').textContent = `${data.current?.temp || '--'}°`;
@@ -207,6 +243,69 @@ function renderWeather(data) {
     
     weatherContent.style.display = 'block';
 }
+
+  // Favorites
+  async function loadFavorites() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/favorites`);
+      if (!res.ok) throw new Error('Failed to load favorites');
+      const items = await res.json();
+      renderFavorites(items);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function renderFavorites(items) {
+    favoritesList.innerHTML = '';
+    if (!items || !items.length) {
+      const li = document.createElement('li');
+      li.className = 'favorites__empty';
+      li.textContent = 'No favorites yet';
+      favoritesList.appendChild(li);
+      return;
+    }
+    items.forEach(it => {
+      const li = document.createElement('li');
+      li.className = 'favorites__item';
+      const name = it.place || it.location_id;
+      li.innerHTML = `
+      <span class="favorites__name">${name}</span>
+      <div class="favorites__actions">
+      <button class="btn btn--small" data-action="view" data-lat="${it.latitude}" data-lon="${it.longitude}">View</button>
+      <button class="btn btn--small btn--danger" data-action="delete" data-id="${it.id}">Delete</button>
+      </div>
+    `;
+      favoritesList.appendChild(li);
+    });
+    // Attach action handlers
+    favoritesList.querySelectorAll('button').forEach(btn => {
+      const action = btn.getAttribute('data-action');
+      if (action === 'view') {
+        btn.addEventListener('click', () => {
+          const lat = parseFloat(btn.getAttribute('data-lat'));
+          const lon = parseFloat(btn.getAttribute('data-lon'));
+          loadWeather(null, lat, lon);
+        });
+      } else if (action === 'delete') {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          await deleteFavorite(id);
+          await loadFavorites();
+        });
+      }
+    });
+  }
+
+  async function deleteFavorite(id) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/favorites/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete favorite');
+    } catch (err) {
+      console.error(err);
+      showError('Could not delete favorite');
+    }
+  }
 
 // UI Helper Functions
 function showLoading() {

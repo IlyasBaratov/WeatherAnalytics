@@ -94,6 +94,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backEnd.api.routers import weather
+from backEnd.core.database import engine, Base
 
 # --- paths ---
 BASE_DIR = pathlib.Path(__file__).resolve().parent
@@ -112,6 +113,12 @@ app.add_middleware(
 
 # Include only the API router (no template rendering)
 app.include_router(weather.router)
+
+
+@app.on_event("startup")
+def on_startup():
+    # create DB tables if they don't exist (local dev convenience)
+    Base.metadata.create_all(bind=engine)
 
 # Health check endpoint
 @app.get("/")

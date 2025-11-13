@@ -1,44 +1,40 @@
 from typing import Optional, Dict, Any
 
 import httpx
-from fastapi import logger
+from fastapi import HTTPException
+from backEnd.core.config import settings
+
 
 class ApiForecastClient:
 
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         """
-        Initialize API-Football client.
-
-        Args:
-            api_key: API-Football API key (defaults to settings)
-            base_url: Base URL for API (defaults to settings)
+        Simple OpenWeather forecast client.
         """
-        #self.api_key = api_key or settings.api_football_key
-        self.base_url = 'https://api.openweathermap.org/data/2.5'  #base_url or settings.api_football_base_url
-        #self.timeout = settings.api_football_timeout
+        self.api_key = api_key
+        self.base_url = base_url or "https://api.openweathermap.org/data/2.5"
 
-        # if not self.api_key:
-        #     raise ValueError("API_FOOTBALL_KEY must be set in environment variables or passed to client")
-
-    async def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None):
+    async def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         url = f"{self.base_url}/{endpoint}"
+        # ensure API key is always sent
+        params = params or {}
+        if self.api_key:
+            params.setdefault("appid", self.api_key)
+
+        timeout = httpx.Timeout(settings.api_timeout)
 
         try:
-            async with httpx.AsyncClient() as client:
-                #logger.info(f"API Request: GET {url} params={params}")
-
+            async with httpx.AsyncClient(timeout=timeout) as client:
                 response = await client.get(url, params=params)
-
-
                 response.raise_for_status()
-                data = response.json()
+                return response.json()
 
-
-                # logger.info(f"API Response: {data.get('results', 0)} results")
-
-                return data
-
+        except httpx.ReadTimeout:
+            # propagate as HTTPException so FastAPI returns a 504
+            raise HTTPException(status_code=504, detail="Upstream API request timed out")
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
-        except httpx.RequestError as e:
-            logger.error(f"Request error: {e}")
+            # re-raise as 502 Bad Gateway
+            raise HTTPException(status_code=502, detail=f"Upstream API returned error: {e.response.status_code}")
+        except httpx.HTTPError as e:
+            # catch other transport errors
+            raise HTTPException(status_code=502, detail=f"Upstream API request failed: {str(e)}")

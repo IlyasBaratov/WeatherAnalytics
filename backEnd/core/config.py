@@ -3,6 +3,8 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     api_weather_key: str = Field("", env="API_WEATHER_KEY")
+    # Timeout (seconds) to use for upstream API requests
+    api_timeout: float = Field(10.0, env="API_TIMEOUT")
     default_lat: float = Field(47.6061, env = "DEFAULT_LAT")
     default_lon: float = Field(-122.3328, env = "DEFAULT_LON")
     units: str = Field("metric", env="WEATHER_UNITS")

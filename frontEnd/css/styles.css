@@ -13,6 +13,9 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .search__input{width:min(720px,100%);padding:16px 18px;border-radius:18px;border:0;background:var(--bg-soft);color:var(--text)}
 .btn{padding:14px 20px;border:0;border-radius:14px;font-weight:700;cursor:pointer}
 .btn--primary{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+.btn--secondary{background:#2b305c;color:#fff}
+.btn--small{padding:8px 12px;border-radius:10px;font-weight:700}
+.btn--danger{background:#7a2e2e;color:#fff}
 .container{max-width:1200px;padding:0 20px 40px;margin:0 auto}
 
 /* Loading and Error Styles */
@@ -61,6 +64,7 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .current{display:grid;grid-template-columns:1fr auto;align-items:center;padding:26px 28px;min-height:170px}
 .current__place{margin:0 0 6px;font-size:clamp(20px,2.6vw,28px);font-weight:700}
 .current__date{margin:0;color:var(--muted);font-weight:500}
+.current__meta-row{display:flex;gap:12px;align-items:center;justify-content:flex-start}
 .current__temp{display:flex;align-items:center;gap:14px}
 .current__icon{font-size:36px}
 .current__value{font-size:clamp(40px,6vw,64px);font-weight:800}
@@ -78,6 +82,11 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .day__temps{margin:0;display:flex;gap:6px;justify-content:center}
 .panel{padding:18px}
 .panel__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.favorites{list-style:none;padding:0;margin:0;max-height:260px;overflow:auto}
+.favorites__item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.02);margin:8px 0}
+.favorites__name{font-weight:700}
+.favorites__actions{display:flex;gap:8px}
+.favorites__empty{color:var(--muted);padding:10px}
 .hourly{list-style:none;padding:0;margin:0;max-height:600px;overflow:auto}
 .hour{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;
   padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.02);margin:8px 0}

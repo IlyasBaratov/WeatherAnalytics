@@ -5,7 +5,60 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
+GET http://127.0.0.1:8000/docs
+Accept: text/html
+
+###
+
+# Create a weather request by query
+POST http://127.0.0.1:8000/api/weather/requests
+Content-Type: application/json
+
+{
+	"q": "Seattle, WA",
+	"start_date": "2025-01-01",
+	"end_date": "2025-01-03",
+	"granularity": "hourly"
+}
+
+###
+
+# List requests
+GET http://127.0.0.1:8000/api/weather/requests
 Accept: application/json
+
+###
+
+# Create favorite by coords
+POST http://127.0.0.1:8000/api/weather/favorites
+Content-Type: application/json
+
+{
+	"lat": 47.6061,
+	"lon": -122.3328
+}
+
+###
+
+# List favorites
+GET http://127.0.0.1:8000/api/weather/favorites
+Accept: application/json
+
+###
+
+# List forecasts (after creating a request)
+GET http://127.0.0.1:8000/api/weather/forecasts
+Accept: application/json
+
+###
+
+# Example update forecast (replace {id})
+PATCH http://127.0.0.1:8000/api/weather/forecasts/{id}
+Content-Type: application/json
+
+{
+	"temperature_c": 12.34,
+	"weather_code": "manual-adjust"
+}
 
 ###
