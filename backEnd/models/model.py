@@ -5,7 +5,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from core.database import Base
+from backEnd.core.database import Base
 
 
 def gen_uuid() -> str:

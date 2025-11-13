@@ -3,11 +3,18 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
-# Database URL configurable via env var. Default to a local SQLite file for
-# easy development. In production, set DATABASE_URL to a Postgres URL (psycopg2).
-# Default to the project-local SQLite database file under ./db/weather.db
-# When running the backend from backEnd/, use a relative path to ../db/weather.db
-DEFAULT_SQLITE_URL = "sqlite:///" + os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "db", "weather.db"))
+"""
+Database URL configurable via env var. Default to a local SQLite file for easy development.
+Default path: <project_root>/db/weather.db (two levels up from this file).
+"""
+
+# Resolve project root and ensure db directory exists
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_DB_DIR = os.path.join(_PROJECT_ROOT, "db")
+os.makedirs(_DB_DIR, exist_ok=True)
+
+# Build default SQLite URL to <project_root>/db/weather.db
+DEFAULT_SQLITE_URL = "sqlite:///" + os.path.join(_DB_DIR, "weather.db")
 DATABASE_URL: str = os.getenv("DATABASE_URL", DEFAULT_SQLITE_URL)
 
 # For SQLite we need to pass connect_args to avoid thread check issues.
