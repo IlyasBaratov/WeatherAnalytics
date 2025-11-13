@@ -15,8 +15,9 @@ def _to_local_time(ts_utc: int, offset_sec: int) -> datetime:
 
 
 class WeatherService:
-    def __init__(self, client = ApiForecastClient):
-        self.client = client or ApiForecastClient()
+    def __init__(self, client = None):
+        self.client = client if client is not None else ApiForecastClient()
+        
     async def fetch_data(self, lat: float, lon:float) -> Dict[str, Any]:
         params = {
             'lat': lat, 'lon': lon,
@@ -24,6 +25,7 @@ class WeatherService:
             'units': settings.units
         }
         return await self.client._make_request('forecast', params)
+        
     def build_context(self, data: Dict[str, Any]) -> Dict[str, Any]:
         city = data.get("city", {})
         place = f'{city.get("name", "")}, {city.get("country", "")}'.strip(", ")
@@ -51,7 +53,7 @@ class WeatherService:
             time = _to_local_time(item.get("dt"), time_zone)
             temp = round(float(item.get("main", {}).get("temp", 0)))
             hourly.append({
-                "time": time.strftime("%-I %p") if hasattr(time, "strftime") else "",
+                "time": time.strftime("%I %p").lstrip("0") if hasattr(time, "strftime") else "",
                 "icon": _pick_icon(item.get("weather", [])),
                 "temp": temp
             })

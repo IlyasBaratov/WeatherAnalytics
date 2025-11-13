@@ -14,6 +14,43 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sa
 .btn{padding:14px 20px;border:0;border-radius:14px;font-weight:700;cursor:pointer}
 .btn--primary{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
 .container{max-width:1200px;padding:0 20px 40px;margin:0 auto}
+
+/* Loading and Error Styles */
+.loading, .error {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin: 2rem auto;
+    max-width: 600px;
+    border-radius: var(--radius-xl);
+}
+
+.loading {
+    background: var(--card);
+}
+
+.loading p {
+    font-size: 1.2rem;
+    color: var(--muted);
+    margin: 0;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.error {
+    background: linear-gradient(135deg, #4a1e1e, #2e1111);
+    border: 2px solid #ff4444;
+}
+
+.error p {
+    margin: 0;
+    font-weight: 600;
+    color: #ffcccc;
+}
+
 .layout{display:grid;grid-template-columns:1.5fr .9fr;gap:24px}
 @media (max-width:980px){.layout{grid-template-columns:1fr}}
 .card{background:var(--card);border-radius:var(--radius-xl);box-shadow:var(--shadow)}
