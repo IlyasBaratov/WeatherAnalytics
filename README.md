@@ -120,7 +120,7 @@ WeatherProject/
 │   │   └── style.css
 │   └── js/
 │       └── app.js
-├── .env.example
+├── .env
 ├── requirements.txt
 └── README.md
 
