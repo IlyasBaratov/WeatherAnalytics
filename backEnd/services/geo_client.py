@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional, List
 import httpx
 from fastapi import HTTPException
-from backEnd.core.config import settings
+from core.config import settings
 
 
 class GeoClient:

@@ -1,17 +1,17 @@
 from typing import Optional
 from fastapi import APIRouter, Query, Depends
-from backEnd.services.weather_service import WeatherService
-from backEnd.services.geo_service import GeoService
-from backEnd.core.config import settings
+from services.weather_service import WeatherService
+from services.geo_service import GeoService
+from core.config import settings
 from fastapi import Body, HTTPException, status
 from pydantic import BaseModel, Field
 from datetime import date, datetime, timedelta
 from starlette.concurrency import run_in_threadpool
-from backEnd.core.database import get_db
+from core.database import get_db
 from sqlalchemy.orm import Session
 import json
 
-from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
+from models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
 
 router = APIRouter(prefix="/api/weather", tags=["weather"])
 

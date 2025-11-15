@@ -2,7 +2,7 @@ from typing import Optional, Dict, Any
 
 import httpx
 from fastapi import HTTPException
-from backEnd.core.config import settings
+from core.config import settings
 
 
 class ApiForecastClient:

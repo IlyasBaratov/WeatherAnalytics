@@ -93,8 +93,8 @@ import pathlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backEnd.api.routers import weather
-from backEnd.core.database import engine, Base
+from api.routers import weather
+from core.database import engine, Base
 
 # --- paths ---
 BASE_DIR = pathlib.Path(__file__).resolve().parent

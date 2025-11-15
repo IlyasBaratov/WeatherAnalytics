@@ -1,8 +1,8 @@
 from typing import Optional
 from fastapi import APIRouter, Request, Query, Depends
-from backEnd.services.weather_service import WeatherService
-from backEnd.services.geo_service import GeoService
-from backEnd.core.config import settings
+from services.weather_service import WeatherService
+from services.geo_service import GeoService
+from core.config import settings
 
 router = APIRouter()
 def get_weather_service() -> WeatherService:

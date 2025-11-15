@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone, date
 from collections import defaultdict
 from typing import Dict, Any, List
-from backEnd.core.config import settings
-from backEnd.services.api_forecast_client import ApiForecastClient
+from core.config import settings
+from services.api_forecast_client import ApiForecastClient
 
 
 def _pick_icon(weather_argument):
