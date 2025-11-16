@@ -1,5 +1,5 @@
 from typing import Optional, Tuple
-from core.config import settings
+from backEnd.core.config import settings
 from .geo_client import GeoClient
 
 class GeoService:
