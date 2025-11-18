@@ -10,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 from backEnd.core.database import get_db
 from sqlalchemy.orm import Session
 import json
+from backEnd.services.youtube_service import YoutubeService
 
 from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
 
@@ -21,6 +22,10 @@ def get_weather_service() -> WeatherService:
 def get_geocoding_service() -> GeoService:
     return GeoService()
 
+def get_youtube_service() -> YoutubeService:
+    return YoutubeService()
+
+
 @router.get("/summary")
 async def summary(
     q: Optional[str] = Query(None),
@@ -29,6 +34,7 @@ async def summary(
     days: int = Query(7, ge =1, le = 7),
     wx: WeatherService = Depends(get_weather_service),
     geo: GeoService = Depends(get_geocoding_service),
+    yt: YoutubeService = Depends(get_youtube_service),
 ):
     if q:
         resolved = await geo.resolve_coords_from_query(q)
@@ -45,6 +51,36 @@ async def summary(
     data = await wx.fetch_data(lat, lon)
     ctx = wx.build_context(data, max_days=days)
     ctx["place"] = place or ctx.get("place") or f"{lat:.4f}, {lon:.4f}"
+
+    city_name = None
+    country_code = None
+
+    if ctx["place"]:
+        parts = [p.strip() for p in ctx["place"].split(",") if p.strip()]
+        if parts:
+            city_name = parts[0]
+        if len(parts) > 2:
+            last = parts[-1]
+            if len(parts) == 2:
+                country_code = last
+    # Fall back to city name if country code is not provided
+    city_name = city_name or q or "Seattle"
+
+    try:
+        videos = await yt.get_local_news_videos(
+            city = city_name,
+            country_code = country_code,
+            max_results = 4,
+        )
+    except Exception as e:
+        # Don't break the weather endpoint if YouTube fails
+        # You can log e if you have logging set up
+        print(f"YouTube API Error: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        videos = []
+    ctx["videos"] = videos
+
     return ctx
 
 

@@ -1,7 +1,6 @@
-// const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
 const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
-
 // const API_BASE_URL = 'http://localhost:8000/api/weather';
+
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const loadingEl = document.getElementById('loading');
@@ -70,7 +69,7 @@ async function loadWeather(query = null, lat = null, lon = null) {
     const params = new URLSearchParams();
 
     if (daysSelect && daysSelect.value) {
-        params.append('days', daysSelect.value);
+      params.append('days', daysSelect.value);
     }
     if (query) {
       params.append('q', query);
@@ -141,6 +140,43 @@ function renderWeather(data) {
       `;
       hourlyList.appendChild(li);
     });
+  }
+
+  // Render YouTube videos
+  const videosList = document.getElementById('videosList');
+  if (videosList) {
+    videosList.innerHTML = '';
+
+    if (data.videos && Array.isArray(data.videos) && data.videos.length > 0) {
+      data.videos.forEach(video => {
+        const li = document.createElement('li');
+        li.className = 'video-card';
+
+        const publishedDate = video.published_at
+          ? new Date(video.published_at).toLocaleDateString()
+          : 'Unknown date';
+
+        li.innerHTML = `
+          ${video.thumbnail_url ? `<img src="${video.thumbnail_url}" alt="${video.title}" class="video-card__thumbnail">` : ''}
+          <div class="video-card__content">
+            <h4 class="video-card__title">${video.title || 'Untitled Video'}</h4>
+            <div class="video-card__meta">
+              <span class="video-card__channel">${video.channel_title || 'Unknown Channel'}</span>
+              <span class="video-card__date">${publishedDate}</span>
+            </div>
+            <a href="${video.url}" target="_blank" rel="noopener noreferrer" class="video-card__link">
+              ▶ Watch on YouTube
+            </a>
+          </div>
+        `;
+        videosList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement('li');
+      li.className = 'videos__empty';
+      li.textContent = 'No local news videos available';
+      videosList.appendChild(li);
+    }
   }
 
   weatherContent.style.display = 'block';
