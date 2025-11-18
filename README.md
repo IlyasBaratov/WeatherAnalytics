@@ -1,27 +1,28 @@
 # 🌦 Weather Data Dashboard
 
-A **FastAPI-based Weather Analytics Platform** integrated with the **OpenWeather API** to deliver real-time and forecast weather data with persistent storage, clean architecture, and a lightweight frontend.
+A **FastAPI-based Weather Analytics Platform** integrated with the **OpenWeather API** and **YouTube Data API** to deliver real-time weather data, forecasts, and local news videos with persistent storage, clean architecture, and a modern frontend.
 
 **🌐 Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)  
-**🔌 API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
+**📌 API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
 
 ---
 
 ## 🎯 Project Overview
 
-This is a **production-ready FastAPI application** that seamlessly integrates with the OpenWeather API to provide:
+This is a **production-ready FastAPI application** that seamlessly integrates with multiple APIs to provide:
 
 - 🌍 **Global weather data** and forecasts  
 - 🌡 **Current, hourly, and daily conditions**  
 - 💨 **Wind, humidity, and precipitation analytics**  
 - 🗺 **Geocoding support** (city name → coordinates)  
+- 📺 **Local news videos** powered by YouTube Data API (**NEW!**)
 - 💾 **Persistent database storage** with SQLAlchemy  
 - 📅 **Date range forecasts** (up to 7 days)  
 - ⚙️ **Environment-based configuration** using Pydantic v2  
 - 🧱 **Clean modular architecture** (Routers / Services / Clients / Models)  
 - 🌐 **CORS-enabled API** for frontend communication  
 - ⚡ **Async HTTP calls** using `httpx`  
-- 🪶 **Simple HTML/CSS/JS frontend** for quick visualization  
+- 🪶 **Modern HTML/CSS/JS frontend** with smooth animations  
 
 ---
 
@@ -36,12 +37,19 @@ This is a **production-ready FastAPI application** that seamlessly integrates wi
 - **Dynamic Weather Icons** – automatically selected from API  
 - **Database Storage** – all forecasts persisted for historical analysis
 
+### 📺 YouTube Integration (**NEW!**)
+- **Local News Videos** – Automatically fetch relevant local news videos for any city
+- **Smart Search** – Uses city name and country code for accurate results
+- **Video Metadata** – Title, channel, thumbnail, publish date, and direct links
+- **Graceful Fallback** – Weather data still works if YouTube API fails
+- **Responsive Display** – Beautiful video cards with hover effects
+
 ### 🏗 Technical Features
 - ⚡ **Async/Await** – High-performance non-blocking I/O  
 - 🔐 **Pydantic Settings v2** – Simple environment variable management  
 - 💾 **SQLAlchemy ORM** – Database models for locations, forecasts, and requests  
 - 📊 **Weather Analytics** – Store and query historical weather data  
-- 🔁 **Clean Architecture** – Separation of concerns (API / Services / Core / Models)  
+- 🔨 **Clean Architecture** – Separation of concerns (API / Services / Core / Models)  
 - 🌐 **CORS Middleware** – Frontend integration-ready  
 - 🧩 **Type Safety** – Full typing and validation  
 - 🎯 **Simplified API** – Date-only endpoints for easy integration  
@@ -49,6 +57,37 @@ This is a **production-ready FastAPI application** that seamlessly integrates wi
 ---
 
 ## 🆕 New Features
+
+### 📺 YouTube Local News Integration
+
+The weather summary endpoint now automatically fetches local news videos relevant to the searched location.
+
+**Features:**
+- Automatic video search based on city name
+- Region-specific results using country codes
+- Up to 4 latest local news videos per request
+- Complete video metadata (title, channel, thumbnail, date, URL)
+- Non-blocking: Weather data always loads even if YouTube fails
+
+**API Response Example:**
+```json
+{
+  "place": "Seattle, WA, US",
+  "current": [ "..."  ],
+  "hourly": [ "..." ],
+  "daily": [ "..." ],
+  "videos": [
+    {
+      "video_id": "abc123",
+      "title": "Seattle Weather Update - November 2025",
+      "channel_title": "KING 5 News",
+      "published_at": "2025-11-18T10:30:00Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/abc123/mqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=abc123"
+    }
+  ]
+}
+```
 
 ### 📅 Date Range Weather Endpoints
 
@@ -81,7 +120,7 @@ GET /api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London
 ```json
 {
   "place": "Seattle, WA, US",
-  "date": "Friday, Nov 15, 2025",
+  "date": "Friday, Nov 18, 2025",
   "current": {
     "temp": 12,
     "feels_like": 10,
@@ -90,8 +129,9 @@ GET /api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London
     "precip": "0 mm",
     "icon": "☁️"
   },
-  "hourly": [...],
-  "daily": [...]
+  "hourly": ["..."],
+  "daily": ["..."],
+  "videos": ["..."]
 }
 ```
 
@@ -108,6 +148,7 @@ GET /api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London
 - `https://api.openweathermap.org/data/2.5/forecast` - Weather forecasts
 - `https://api.openweathermap.org/geo/1.0/direct` - Forward geocoding
 - `https://api.openweathermap.org/geo/1.0/reverse` - Reverse geocoding
+- `https://www.googleapis.com/youtube/v3/search` - YouTube video search (**NEW!**)
 
 ---
 
@@ -116,6 +157,7 @@ GET /api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London
 ### Prerequisites
 - Python 3.10+  
 - [OpenWeather API Key](https://openweathermap.org/api) (free tier available)
+- [YouTube Data API Key](https://console.cloud.google.com/apis/api/youtube.googleapis.com) (free tier available) (**NEW!**)
 - SQLite (included) or PostgreSQL (optional)
 
 ---
@@ -124,7 +166,7 @@ GET /api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London
 
 #### 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/IlyasBaratov/WeatherProject.git
+git clone https://github.com/IlyasBaratov/WeatherAnalytics.git
 cd WeatherProject
 ```
 
@@ -134,9 +176,11 @@ python -m venv .venv
 
 # Windows
 .venv\Scripts\activate
+pip install requests
 
 # macOS/Linux
 source .venv/bin/activate
+pip install requests
 ```
 
 #### 3️⃣ Install dependencies
@@ -150,6 +194,9 @@ Create a `.env` file in the root directory:
 # OpenWeather API
 API_WEATHER_KEY=your_openweather_api_key_here
 
+# YouTube Data API (NEW!)
+API_YOUTUBE_KEY=your_youtube_api_key_here
+
 # Default Location (Seattle, WA)
 DEFAULT_LAT=47.6061
 DEFAULT_LON=-122.3328
@@ -161,6 +208,21 @@ WEATHER_UNITS=metric
 # Database (optional, defaults to SQLite)
 DATABASE_URL=sqlite:///./weather.db
 ```
+
+#### 🔑 Getting API Keys
+
+**OpenWeather API:**
+1. Visit [OpenWeather](https://openweathermap.org/api)
+2. Sign up for a free account
+3. Generate an API key
+4. Add to your `.env` file as `API_WEATHER_KEY`
+
+**YouTube Data API (NEW!):**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing
+3. Enable "YouTube Data API v3"
+4. Create credentials (API Key)
+5. Add to your `.env` file as `API_YOUTUBE_KEY`
 
 #### 5️⃣ Run the application
 
@@ -190,40 +252,7 @@ uvicorn backEnd.main:app --host 0.0.0.0 --port 8000
 
 ---
 
-## 🏗️ Architecture
-
-### Production Deployment
-```
-┌─────────────────────────┐
-│  weatherdemo.online     │  ← Frontend (HTML/CSS/JS)
-│  (Frontend App)         │
-└───────────┬─────────────┘
-            │
-            │ API Calls
-            ▼
-┌─────────────────────────┐
-│  api.weatherdemo.online │  ← Backend API (FastAPI)
-│  (REST API)             │
-└───────────┬─────────────┘
-            │
-            │ Fetches Data
-            ▼
-┌─────────────────────────┐
-│  OpenWeather API        │  ← External Weather Service
-└─────────────────────────┘
-```
-
-### Local Development
-```
-┌──────────────────┐     ┌──────────────────┐
-│ localhost:3000   │────▶│ localhost:8000   │
-│ (Frontend)       │     │ (Backend API)    │
-└──────────────────┘     └──────────────────┘
-```
-
----
-
-## 📂 Project Structure
+## 🗂️ Project Structure
 
 ```
 WeatherProject/
@@ -239,14 +268,16 @@ WeatherProject/
 │   │   ├── api_forecast_client.py  # OpenWeather API client
 │   │   ├── geo_client.py           # Geocoding API client
 │   │   ├── geo_service.py          # Geocoding service layer
-│   │   └── weather_service.py      # Weather service layer
+│   │   ├── weather_service.py      # Weather service layer
+│   │   ├── youtube_client.py       # YouTube API client (NEW!)
+│   │   └── youtube_service.py      # YouTube service layer (NEW!)
 │   ├── models/
 │   │   └── model.py           # SQLAlchemy database models
 │   ├── __init__.py
 │   └── main.py                # FastAPI application entry point
 ├── frontEnd/
 │   ├── html/
-│   │   └── index.html         # Main web interface
+│   │   └── index.html         # Main web interface (updated with video display)
 │   ├── css/
 │   │   └── style.css          # Styling
 │   └── js/
@@ -268,14 +299,14 @@ WeatherProject/
 
 ### 📡 Endpoints
 
-#### 1️⃣ **Weather Summary** (Current Conditions)
+#### 1️⃣ **Weather Summary** (Current Conditions + Videos)
 
 ```http
 GET /api/weather/summary
 ```
 
 **Description:**  
-Fetch current weather summary with hourly and daily forecasts.
+Fetch current weather summary with hourly and daily forecasts, plus local news videos.
 
 **Query Parameters:**
 | Parameter | Type | Required | Description |
@@ -283,11 +314,15 @@ Fetch current weather summary with hourly and daily forecasts.
 | `q` | string | ❌ Optional | City name (e.g., "Seattle", "London") |
 | `lat` | float | ❌ Optional | Latitude |
 | `lon` | float | ❌ Optional | Longitude |
+| `days` | int | ❌ Optional | Number of forecast days (1-7, default: 7) |
 
 **Example Requests:**
 ```bash
 # City name
 curl "https://api.weatherdemo.online/api/weather/summary?q=Seattle"
+
+# City with custom days
+curl "https://api.weatherdemo.online/api/weather/summary?q=London&days=5"
 
 # Coordinates
 curl "https://api.weatherdemo.online/api/weather/summary?lat=47.6061&lon=-122.3328"
@@ -300,7 +335,7 @@ curl "https://api.weatherdemo.online/api/weather/summary"
 ```json
 {
   "place": "Seattle, WA, US",
-  "date": "Friday, Nov 15, 2025",
+  "date": "Tuesday, Nov 18, 2025",
   "current": {
     "temp": 12,
     "feels_like": 10,
@@ -314,8 +349,18 @@ curl "https://api.weatherdemo.online/api/weather/summary"
     {"time": "3 PM", "icon": "🌧️", "temp": 11}
   ],
   "daily": [
-    {"name": "Fri", "hi": 15, "lo": 10, "icon": "☁️"},
-    {"name": "Sat", "hi": 14, "lo": 9, "icon": "🌧️"}
+    {"name": "Tue", "hi": 15, "lo": 10, "icon": "☁️"},
+    {"name": "Wed", "hi": 14, "lo": 9, "icon": "🌧️"}
+  ],
+  "videos": [
+    {
+      "video_id": "dQw4w9WgXcQ",
+      "title": "Seattle Weather Update - Heavy Rain Expected",
+      "channel_title": "KING 5 News",
+      "published_at": "2025-11-18T08:30:00Z",
+      "thumbnail_url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+    }
   ]
 }
 ```
@@ -347,35 +392,6 @@ curl "https://api.weatherdemo.online/api/weather/forecast/range?start_date=2025-
 curl "https://api.weatherdemo.online/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-22"
 ```
 
-**Example Response:**
-```json
-{
-  "success": true,
-  "message": "Weather data fetched and stored for Seattle, WA, US",
-  "location": {
-    "place": "Seattle, WA, US",
-    "latitude": 47.6061,
-    "longitude": -122.3328
-  },
-  "date_range": {
-    "start": "2025-11-15",
-    "end": "2025-11-20",
-    "days": 6
-  },
-  "storage": {
-    "request_id": "abc-123-def",
-    "location_id": "xyz-789",
-    "provider": "OpenWeather",
-    "forecasts_stored": 48,
-    "timestamp": "2025-11-15T10:30:00"
-  },
-  "api_data": {
-    "list": [...],
-    "city": {...}
-  }
-}
-```
-
 ---
 
 #### 3️⃣ **Get Stored Forecasts**
@@ -392,39 +408,6 @@ Retrieve previously stored weather forecasts from database.
 |-----------|------|----------|-------------|
 | `start_date` | date | ✅ Yes | Start date (YYYY-MM-DD) |
 | `end_date` | date | ✅ Yes | End date (YYYY-MM-DD) |
-
-**Example Request:**
-```bash
-curl "https://api.weatherdemo.online/api/weather/forecast/range/stored?start_date=2025-11-15&end_date=2025-11-20"
-```
-
-**Example Response:**
-```json
-{
-  "success": true,
-  "location": {
-    "place": "Seattle, WA, US",
-    "latitude": 47.6061,
-    "longitude": -122.3328
-  },
-  "date_range": {
-    "start": "2025-11-15",
-    "end": "2025-11-20"
-  },
-  "count": 48,
-  "forecasts": [
-    {
-      "id": "forecast-uuid",
-      "forecast_time": "2025-11-15T12:00:00",
-      "temperature_c": 12.5,
-      "humidity_pct": 75.0,
-      "wind_speed_ms": 5.2,
-      "weather_code": "Clouds",
-      ...
-    }
-  ]
-}
-```
 
 ---
 
@@ -446,18 +429,6 @@ Fetch weather for any location with custom parameters.
 | `lat` | float | ❌ Optional | Latitude |
 | `lon` | float | ❌ Optional | Longitude |
 | `store_in_db` | boolean | ❌ Optional | Store data (default: true) |
-
-**Example Requests:**
-```bash
-# By city name
-curl "https://api.weatherdemo.online/api/weather/range?start_date=2025-11-15&end_date=2025-11-20&q=London"
-
-# By coordinates
-curl "https://api.weatherdemo.online/api/weather/range?start_date=2025-11-15&end_date=2025-11-20&lat=51.5074&lon=-0.1278"
-
-# Preview without storing
-curl "https://api.weatherdemo.online/api/weather/range?start_date=2025-11-15&end_date=2025-11-17&q=Tokyo&store_in_db=false"
-```
 
 ---
 
@@ -494,66 +465,12 @@ DELETE /api/weather/favorites/{favorite_id}
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `API_WEATHER_KEY` | OpenWeather API key | - | ✅ Yes |
+| `API_YOUTUBE_KEY` | YouTube Data API key | - | ✅ Yes |
 | `DEFAULT_LAT` | Default latitude | 47.6061 | ✅ Yes |
 | `DEFAULT_LON` | Default longitude | -122.3328 | ✅ Yes |
 | `API_TIMEOUT` | API request timeout (seconds) | 10.0 | ❌ No |
 | `WEATHER_UNITS` | Temperature units (metric/imperial) | metric | ❌ No |
 | `DATABASE_URL` | Database connection string | sqlite:///./weather.db | ❌ No |
-
-### Getting an API Key
-
-1. Visit [OpenWeather](https://openweathermap.org/api)
-2. Sign up for a free account
-3. Generate an API key
-4. Add to your `.env` file
-
----
-
-## 💾 Database
-
-### Automatic Setup
-
-The database is created automatically on first run:
-
-```python
-@app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
-```
-
-### Database Models
-
-#### **Location**
-```python
-- id (UUID)
-- canonical_name (string)
-- latitude (float)
-- longitude (float)
-- country_code (string)
-- timezone (string)
-```
-
-#### **WeatherForecast**
-```python
-- id (UUID)
-- location_id (FK)
-- forecast_time (datetime)
-- temperature_c (decimal)
-- humidity_pct (decimal)
-- wind_speed_ms (decimal)
-- weather_code (string)
-- ... 15+ weather parameters
-```
-
-#### **Request**
-```python
-- id (UUID)
-- location_id (FK)
-- start_date (date)
-- end_date (date)
-- status (string)
-- created_at (datetime)
-```
 
 ---
 
@@ -561,7 +478,7 @@ def on_startup():
 
 ### Using cURL
 ```bash
-# Test weather summary
+# Test weather summary with videos
 curl "https://api.weatherdemo.online/api/weather/summary?q=Seattle"
 
 # Test date range (local)
@@ -572,15 +489,18 @@ curl "http://localhost:8000/api/weather/forecast/range?start_date=2025-11-15&end
 ```python
 import requests
 
-# Fetch weather
+# Fetch weather with videos
 response = requests.get(
-    "https://api.weatherdemo.online/api/weather/forecast/range",
-    params={
-        "start_date": "2025-11-15",
-        "end_date": "2025-11-20"
-    }
+    "https://api.weatherdemo.online/api/weather/summary",
+    params={"q": "Seattle"}
 )
-print(response.json())
+data = response.json()
+
+print(f"Temperature: {data['current']['temp']}°C")
+print(f"Videos found: {len(data.get('videos', []))}")
+
+for video in data.get('videos', []):
+    print(f"- {video['title']} by {video['channel_title']}")
 ```
 
 ### Interactive API Docs
@@ -591,31 +511,6 @@ Visit the auto-generated documentation:
 
 ---
 
-## 🚀 Deployment
-
-### Production Deployment (Current)
-
-The app is deployed at **https://weatherdemo.online** using:
-- **Server:** VPS/Cloud hosting
-- **Web Server:** Nginx (reverse proxy)
-- **ASGI Server:** Uvicorn
-- **Database:** SQLite/PostgreSQL
-- **SSL:** Let's Encrypt
-
-### Deploy Your Own
-
-#### Using Uvicorn (Production)
-```bash
-uvicorn backEnd.main:app --host 0.0.0.0 --port 8000 --workers 4
-```
-
-#### Using Docker (Coming Soon)
-```bash
-docker-compose up -d
-```
-
----
-
 ## 🛣️ Roadmap
 
 - [x] ✅ Date range weather forecasts
@@ -623,6 +518,8 @@ docker-compose up -d
 - [x] ✅ Location favorites
 - [x] ✅ Request tracking and history
 - [x] ✅ Production deployment
+- [x] ✅ YouTube local news integration
+- [x] ✅ Modern animated frontend
 - [ ] Add One Call 3.0 API integration for historical data
 - [ ] Add Dockerfile & docker-compose setup
 - [ ] Add metric/imperial toggle on frontend
@@ -633,50 +530,6 @@ docker-compose up -d
 - [ ] Add data visualization charts
 - [ ] Add weather comparison between locations
 - [ ] Add mobile app (React Native)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📝 API Response Examples
-
-### Current Weather
-```json
-{
-  "temp": 12,
-  "feels_like": 10,
-  "humidity": 75,
-  "wind": "5 km/h",
-  "icon": "☁️"
-}
-```
-
-### Forecast Entry
-```json
-{
-  "forecast_time": "2025-11-15T15:00:00",
-  "temperature_c": 12.5,
-  "temp_min_c": 11.0,
-  "temp_max_c": 14.0,
-  "humidity_pct": 75.0,
-  "pressure_hpa": 1013.25,
-  "wind_speed_ms": 5.2,
-  "wind_deg": 180.0,
-  "cloud_pct": 50.0,
-  "pop_pct": 10.0,
-  "weather_code": "Clouds"
-}
-```
 
 ---
 
@@ -698,6 +551,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **SQLAlchemy** - SQL toolkit and ORM
 - **Pydantic** - Data validation using Python type hints
 - **OpenWeather** - Weather data provider
+- **YouTube Data API** - Video content integration
 - **httpx** - Async HTTP client
 - All contributors and open source community
 
@@ -709,18 +563,19 @@ For questions, issues, or feature requests:
 - 🐛 **Issues:** [GitHub Issues](https://github.com/IlyasBaratov/WeatherAnalytics/issues)
 - 📧 **Email:** Contact through GitHub
 - 🌐 **Frontend:** https://weatherdemo.online
-- 🔌 **API:** https://api.weatherdemo.online
+- 📌 **API:** https://api.weatherdemo.online
 
 ---
 
 ## 🎯 Quick Links
 
 - 🌐 **Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)
-- 🔌 **API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
+- 📌 **API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
 - 📚 **API Docs (Swagger):** [https://api.weatherdemo.online/docs](https://api.weatherdemo.online/docs)
 - 📖 **API Docs (ReDoc):** [https://api.weatherdemo.online/redoc](https://api.weatherdemo.online/redoc)
-- 🔗 **GitHub:** [https://github.com/IlyasBaratov/WeatherProject](https://github.com/IlyasBaratov/WeatherProject)
+- 🔗 **GitHub:** [https://github.com/IlyasBaratov/WeatherAnalytics](https://github.com/IlyasBaratov/WeatherAnalytics)
 - 🌤️ **OpenWeather API:** [https://openweathermap.org/api](https://openweathermap.org/api)
+- 📺 **YouTube Data API:** [https://developers.google.com/youtube/v3](https://developers.google.com/youtube/v3)
 
 ---
 
