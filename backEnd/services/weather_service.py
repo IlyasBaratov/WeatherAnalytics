@@ -28,7 +28,7 @@ class WeatherService:
         }
         return await self.client._make_request('forecast', params)
         
-    def build_context(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def build_context(self, data: Dict[str, Any], max_days = 7) -> Dict[str, Any]:
         city = data.get("city", {})
         place = f'{city.get("name", "")}, {city.get("country", "")}'.strip(", ")
         if not place:
@@ -66,9 +66,19 @@ class WeatherService:
             date = _to_local_time(item["dt"], time_zone).date()
             groups[date].append(item)
         daily = []
-        for date in sorted(groups.keys())[:7]:
+        for date in sorted(groups.keys())[:max_days]: #max_days changed
             temps = [float(x.get("main", {}).get("temp", 0)) for x in groups[date]]
             hi, lo = (round(max(temps)) if temps else 0, round(min(temps)) if temps else 0)
             mid = groups[date][len(groups[date]) // 2]
-            daily.append({"name": date.strftime("%a"), "hi": hi, "lo": lo, "icon": _pick_icon(mid.get("weather", []))})
-        return{"place":place, "date":nice_date, "current":current, "hourly":hourly, "daily":daily}
+            daily.append({
+                "name": date.strftime("%a"),
+                "hi": hi,
+                "lo": lo,
+                "icon": _pick_icon(mid.get("weather", []))})
+
+        return{
+            "place":place,
+            "date":nice_date,
+            "current":current,
+            "hourly":hourly,
+            "daily":daily}

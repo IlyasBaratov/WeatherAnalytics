@@ -819,8 +819,22 @@
         <h1>Weather Analytics</h1>
         <form class="search" id="searchForm">
           <input class="search__input" type="text" id="searchInput" placeholder="Search for a place…" />
+
+          <!-- 👇 NEW: day range selector -->
+<!--            class = "btn btn--primary"-->
+          <select class = "btn--secondary"; id="daysSelect" style="padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border);">
+              <option value="1">Next 1 days</option>
+              <option value="2">Next 2 days</option>
+              <option value="3">Next 3 days</option>
+              <option value="4">Next 4 days</option>
+              <option value="5">Next 5 days</option>
+              <option value="6">Next 6 days</option>
+              <option value="7" selected>Next 7 days</option>
+          </select>
+
           <button class="btn btn--primary" type="submit">Search</button>
         </form>
+
       </div>
       <div class="theme-toggle" id="themeToggle"></div>
     </div>
@@ -899,7 +913,7 @@
 
   <script>
 const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
-
+// const API_BASE_URL = 'http://localhost:8000/api/weather';
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const loadingEl = document.getElementById('loading');
@@ -908,6 +922,7 @@ const weatherContent = document.getElementById('weatherContent');
 const favoritesList = document.getElementById('favoritesList');
 const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
 const themeToggle = document.getElementById('themeToggle');
+const daysSelect = document.getElementById('daysSelect');
 
 let currentPlace = null;
 
@@ -966,6 +981,9 @@ async function loadWeather(query = null, lat = null, lon = null) {
     let url = `${API_BASE_URL}/summary`;
     const params = new URLSearchParams();
 
+    if (daysSelect && daysSelect.value) {
+            params.append('days', daysSelect.value);
+            }
     if (query) {
       params.append('q', query);
     } else if (lat && lon) {

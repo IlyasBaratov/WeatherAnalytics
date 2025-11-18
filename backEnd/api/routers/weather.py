@@ -26,6 +26,7 @@ async def summary(
     q: Optional[str] = Query(None),
     lat: Optional[float] = Query(None),
     lon: Optional[float] = Query(None),
+    days: int = Query(7, ge =1, le = 7),
     wx: WeatherService = Depends(get_weather_service),
     geo: GeoService = Depends(get_geocoding_service),
 ):
@@ -42,7 +43,7 @@ async def summary(
         place = await geo.resolve_place_from_coords(lat, lon)
 
     data = await wx.fetch_data(lat, lon)
-    ctx = wx.build_context(data)
+    ctx = wx.build_context(data, max_days=days)
     ctx["place"] = place or ctx.get("place") or f"{lat:.4f}, {lon:.4f}"
     return ctx
 
