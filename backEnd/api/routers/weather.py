@@ -80,9 +80,9 @@ async def summary(
             country_code = parts[-1]
     city_name = city_name or q or "Seattle"
 
-    # Try to get videos but don't wait indefinitely — use a short timeout (e.g., 2s).
+    # Try to get videos but don't wait indefinitely — use a short timeout (e.g., 10s).
     try:
-        videos = await asyncio.wait_for(video_task, timeout=2.0)
+        videos = await asyncio.wait_for(video_task, timeout=10.0)
     except Exception as e:
         # Don't break the weather endpoint if YouTube fails or times out
         video_task.cancel()
