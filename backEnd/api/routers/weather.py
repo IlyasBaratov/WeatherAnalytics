@@ -10,6 +10,7 @@ from starlette.concurrency import run_in_threadpool
 from backEnd.core.database import get_db
 from sqlalchemy.orm import Session
 import json
+import asyncio
 from backEnd.services.youtube_service import YoutubeService
 
 from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
@@ -48,37 +49,48 @@ async def summary(
         lon = lon or settings.default_lon
         place = await geo.resolve_place_from_coords(lat, lon)
 
-    data = await wx.fetch_data(lat, lon)
-    ctx = wx.build_context(data, max_days=days)
+    # Prepare a best-effort city/country guess from resolved `place` or query for the video call.
+    city_guess = None
+    country_guess = None
+    if place:
+        parts_guess = [p.strip() for p in place.split(",") if p.strip()]
+        if parts_guess:
+            city_guess = parts_guess[0]
+        if len(parts_guess) == 2:
+            country_guess = parts_guess[-1]
+    city_guess = city_guess or q or "Seattle"
+
+    # Start asynchronous tasks: primary weather fetch + best-effort video fetch.
+    fetch_task = asyncio.create_task(wx.fetch_data(lat, lon))
+    video_task = asyncio.create_task(yt.get_local_news_videos(city=city_guess, country_code=country_guess, max_results=4))
+
+    # Wait for weather data (primary). build_context may be CPU-bound; run it in threadpool.
+    data = await fetch_task
+    ctx = await run_in_threadpool(wx.build_context, data, max_days=days)
     ctx["place"] = place or ctx.get("place") or f"{lat:.4f}, {lon:.4f}"
 
+    # Extract a more accurate city/country from the final context `place` if available.
     city_name = None
     country_code = None
-
-    if ctx["place"]:
+    if ctx.get("place"):
         parts = [p.strip() for p in ctx["place"].split(",") if p.strip()]
         if parts:
             city_name = parts[0]
-        if len(parts) > 2:
-            last = parts[-1]
-            if len(parts) == 2:
-                country_code = last
-    # Fall back to city name if country code is not provided
+        if len(parts) == 2:
+            country_code = parts[-1]
     city_name = city_name or q or "Seattle"
 
+    # Try to get videos but don't wait indefinitely — use a short timeout (e.g., 10s).
     try:
-        videos = await yt.get_local_news_videos(
-            city = city_name,
-            country_code = country_code,
-            max_results = 4,
-        )
+        videos = await asyncio.wait_for(video_task, timeout=10.0)
     except Exception as e:
-        # Don't break the weather endpoint if YouTube fails
-        # You can log e if you have logging set up
+        # Don't break the weather endpoint if YouTube fails or times out
+        video_task.cancel()
         print(f"YouTube API Error: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
         videos = []
+
     ctx["videos"] = videos
 
     return ctx
