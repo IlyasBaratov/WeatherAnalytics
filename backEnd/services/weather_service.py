@@ -20,11 +20,11 @@ class WeatherService:
     def __init__(self, client = None):
         self.client = client if client is not None else ApiForecastClient()
         
-    async def fetch_data(self, lat: float, lon:float) -> Dict[str, Any]:
+    async def fetch_data(self, lat: float, lon:float, units: str | None = None) -> Dict[str, Any]:
         params = {
             'lat': lat, 'lon': lon,
             'appid': settings.api_weather_key,
-            'units': settings.units
+            'units': units or settings.units
         }
         return await self.client._make_request('forecast', params)
         

@@ -33,6 +33,7 @@ async def summary(
     lat: Optional[float] = Query(None),
     lon: Optional[float] = Query(None),
     days: int = Query(7, ge =1, le = 7),
+    units: str = Query(None),
     wx: WeatherService = Depends(get_weather_service),
     geo: GeoService = Depends(get_geocoding_service),
     yt: YoutubeService = Depends(get_youtube_service),
@@ -61,7 +62,7 @@ async def summary(
     city_guess = city_guess or q or "Seattle"
 
     # Start asynchronous tasks: primary weather fetch + best-effort video fetch.
-    fetch_task = asyncio.create_task(wx.fetch_data(lat, lon))
+    fetch_task = asyncio.create_task(wx.fetch_data(lat, lon, units))
     video_task = asyncio.create_task(yt.get_local_news_videos(city=city_guess, country_code=country_guess, max_results=4))
 
     # Wait for weather data (primary). build_context may be CPU-bound; run it in threadpool.

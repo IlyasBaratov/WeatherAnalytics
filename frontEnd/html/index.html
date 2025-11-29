@@ -37,6 +37,8 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
+
+
 [data-theme="dark"] {
   --primary: #818cf8;
   --primary-light: #a5b4fc;
@@ -197,14 +199,15 @@ h1 {
 
 .search {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
   flex: 1;
-  max-width: 500px;
-  animation: slideInRight 0.6s ease 0.2s both;
+  max-width: 720px;     /* wider so everything fits in one line */
+  flex-wrap: nowrap;    /* keep one row on desktop */
 }
 
 .search__input {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 0.75rem 1.25rem;
   background: var(--bg-primary);
   border: 2px solid var(--border);
@@ -213,6 +216,13 @@ h1 {
   font-size: 0.95rem;
   font-family: inherit;
   transition: all 0.3s ease;
+  min-width: 0;         /* lets it shrink instead of forcing wrap */
+}
+#unitSelect,
+#daysSelect {
+  flex: 0 0 auto;
+  min-width: 90px;
+  white-space: nowrap;
 }
 
 .search__input:focus {
@@ -264,7 +274,75 @@ h1 {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
   box-shadow: var(--shadow-md);
+    white-space: nowrap;
+    flex: 0 0 auto;
 }
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-left {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  /* Stack the search controls nicely */
+  .search {
+    flex-direction: row;
+    flex-wrap: wrap;       /* allow multiple rows on mobile */
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .search__input {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  #unitSelect,
+  #daysSelect {
+    flex: 1 1 calc(50% - 0.5rem);  /* two selects side by side */
+    width: 100%;
+    text-align: center;
+  }
+
+  .btn--primary {
+    flex: 1 1 100%;
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem 1.2rem;
+  }
+
+  .current__temp {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .current__place {
+    font-size: 1.75rem;
+  }
+
+  .current__icon {
+    font-size: 5rem;
+  }
+
+  .current__value {
+    font-size: 4rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+}
+
 
 .btn--primary:hover {
   transform: translateY(-3px);
@@ -752,47 +830,7 @@ h1 {
   }
 }
 
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
 
-  .header-left {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  h1 {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-
-  .search {
-    max-width: 100%;
-  }
-
-  .current__temp {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .current__place {
-    font-size: 1.75rem;
-  }
-
-  .current__icon {
-    font-size: 5rem;
-  }
-
-  .current__value {
-    font-size: 4rem;
-  }
-
-  .container {
-    padding: 1rem;
-  }
-}
 
 /* Scrollbar */
 ::-webkit-scrollbar {
@@ -812,6 +850,7 @@ h1 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
+
 /* ----------------------------- */
 /*       YouTube Videos UI       */
 /* ----------------------------- */
@@ -823,6 +862,32 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+.search {
+  display: flex;
+  flex-wrap: wrap;      /* <-- allows wrapping */
+  gap: 0.75rem;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .search {
+    flex-direction: column;  /* stack everything */
+    width: 100%;
+  }
+
+  .search__input,
+  #unitSelect,
+  #daysSelect,
+  .btn--primary {
+    width: 100%;             /* full width on phones */
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  #unitSelect,
+  #daysSelect {
+    text-align: center;
+  }
 }
 
 /* Empty State */
@@ -954,17 +1019,19 @@ h1 {
         <h1>Weather Analytics</h1>
         <form class="search" id="searchForm">
           <input class="search__input" type="text" id="searchInput" placeholder="Search for a place…" />
-
-          <select id="daysSelect" style="padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border);">
-            <option value="1">Next 1 days</option>
-            <option value="2">Next 2 days</option>
-            <option value="3">Next 3 days</option>
-            <option value="4">Next 4 days</option>
-            <option value="5">Next 5 days</option>
-            <option value="6">Next 6 days</option>
-            <option value="7" selected>Next 7 days</option>
+          <select id="unitSelect" class="btn btn--secondary">
+            <option value="metric">°C</option>
+            <option value="imperial">°F</option>
           </select>
-
+          <select id="daysSelect" class="btn btn--secondary">
+            <option value="1">1 day</option>
+            <option value="2">2 days</option>
+            <option value="3">3 days</option>
+            <option value="4">4 days</option>
+            <option value="5">5 days</option>
+            <option value="6">6 days</option>
+            <option value="7" selected>7 days</option>
+          </select>
           <button class="btn btn--primary" type="submit">Search</button>
         </form>
       </div>
@@ -1055,6 +1122,7 @@ h1 {
       const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
 // const API_BASE_URL = 'http://localhost:8000/api/weather';
 
+const unitSelect = document.getElementById('unitSelect');
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const loadingEl = document.getElementById('loading');
@@ -1066,6 +1134,12 @@ const themeToggle = document.getElementById('themeToggle');
 const daysSelect = document.getElementById('daysSelect');
 
 let currentPlace = null;
+
+unitSelect.value = localStorage.getItem('unit') || 'metric';
+unitSelect.addEventListener('change', () => {
+    localStorage.setItem('unit', unitSelect.value);
+    loadWeather(searchInput.value.trim());
+})
 
 // Theme Management
 function initTheme() {
@@ -1125,6 +1199,8 @@ async function loadWeather(query = null, lat = null, lon = null) {
     if (daysSelect && daysSelect.value) {
       params.append('days', daysSelect.value);
     }
+    params.append('units', unitSelect.value || 'metric');
+
     if (query) {
       params.append('q', query);
     } else if (lat && lon) {
@@ -1154,15 +1230,16 @@ async function loadWeather(query = null, lat = null, lon = null) {
 }
 
 function renderWeather(data) {
-  currentPlace = data.place || 'Unknown';
-  document.getElementById('place').textContent = currentPlace;
-  document.getElementById('date').textContent = data.date || '--';
-  document.getElementById('currentIcon').textContent = data.current?.icon || '☁️';
-  document.getElementById('currentTemp').textContent = `${data.current?.temp || '--'}°`;
-  document.getElementById('feelsLike').textContent = `${data.current?.feels_like || '--'}°`;
-  document.getElementById('humidity').textContent = `${data.current?.humidity || '--'}%`;
-  document.getElementById('wind').textContent = data.current?.wind || '--';
-  document.getElementById('precip').textContent = data.current?.precip || '--';
+    const unitSymbol = unitSelect.value === 'imperial' ? '°F' : '°C';
+    currentPlace = data.place || 'Unknown';
+    document.getElementById('place').textContent = currentPlace;
+    document.getElementById('date').textContent = data.date || '--';
+    document.getElementById('currentIcon').textContent = data.current?.icon || '☁️';
+    document.getElementById('currentTemp').textContent = `${data.current?.temp || '--'}${unitSymbol}`;
+    document.getElementById('feelsLike').textContent = `${data.current?.feels_like || '--'}${unitSymbol}`;
+    document.getElementById('humidity').textContent = `${data.current?.humidity || '--'}%`;
+    document.getElementById('wind').textContent = data.current?.wind || '--';
+    document.getElementById('precip').textContent = data.current?.precip || '--';
 
   const dailyList = document.getElementById('dailyList');
   dailyList.innerHTML = '';
