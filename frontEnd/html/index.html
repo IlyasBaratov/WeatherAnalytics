@@ -156,9 +156,63 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: all 0.3s ease;
+  transition: padding 0.25s ease, background 0.25s ease, transform 0.25s ease;
   animation: slideInDown 0.5s ease;
 }
+/* NEW START*/
+:root {
+  --header-shrink: 0; /* 0 = full size, 1 = fully compact */
+}
+.site-header--compact {
+  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.75); /* translucent navy */
+}
+
+.site-header--compact .header-content {
+  padding: 0.4rem 1rem;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Hide title + big elements */
+.site-header--compact h1,
+.site-header--compact .search__input,
+.site-header--compact .btn--primary {
+  display: none !important;
+}
+
+/* Tiny controls */
+.site-header--compact #unitSelect,
+.site-header--compact #daysSelect {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  min-width: 60px;
+  border-radius: 8px;
+}
+
+/* Compact search icon */
+.site-header--compact .compact-search-icon {
+  display: inline-block !important;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  font-size: 1.1rem;
+  border: 1px solid var(--border);
+}
+
+/* Hide full search bar */
+.site-header--compact .search {
+  flex-direction: row;
+  gap: 0.4rem;
+}
+
+/* Smaller theme toggle */
+.site-header--compact .theme-toggle {
+  transform: scale(0.7);
+}
+/* NEW END */
+
 
 @keyframes slideInDown {
   from {
@@ -282,43 +336,61 @@ h1 {
   .header-content {
     flex-direction: column;
     align-items: stretch;
+    padding: 0.75rem 1rem 0.75rem;
+    gap: 0.5rem;
   }
 
   .header-left {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.5rem;
   }
 
   h1 {
-    font-size: 1.5rem;
-    text-align: center;
+    font-size: 1.35rem;
+    text-align: left;
   }
 
-  /* Stack the search controls nicely */
+  /* Search block on mobile */
   .search {
     flex-direction: row;
-    flex-wrap: wrap;       /* allow multiple rows on mobile */
-    max-width: 100%;
+    flex-wrap: wrap;
     width: 100%;
+    max-width: 100%;
+    gap: 0.5rem;
   }
 
   .search__input {
     flex: 1 1 100%;
     width: 100%;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.95rem;
   }
 
   #unitSelect,
   #daysSelect {
-    flex: 1 1 calc(50% - 0.5rem);  /* two selects side by side */
+    flex: 1 1 calc(50% - 0.3rem);   /* two small controls side-by-side */
     width: 100%;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.9rem;
     text-align: center;
   }
 
   .btn--primary {
     flex: 1 1 100%;
     width: 100%;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.95rem;
     justify-content: center;
-    padding: 0.9rem 1.2rem;
+  }
+
+  .theme-toggle {
+    align-self: flex-end;
+    transform: scale(0.9);
+  }
+
+  .container {
+    padding: 1rem;
   }
 
   .current__temp {
@@ -336,10 +408,6 @@ h1 {
 
   .current__value {
     font-size: 4rem;
-  }
-
-  .container {
-    padding: 1rem;
   }
 }
 
@@ -1018,6 +1086,7 @@ h1 {
       <div class="header-left">
         <h1>Weather Analytics</h1>
         <form class="search" id="searchForm">
+
           <input class="search__input" type="text" id="searchInput" placeholder="Search for a place…" />
           <select id="unitSelect" class="btn btn--secondary">
             <option value="metric">°C</option>
@@ -1033,6 +1102,7 @@ h1 {
             <option value="7" selected>7 days</option>
           </select>
           <button class="btn btn--primary" type="submit">Search</button>
+            <span class="compact-search-icon" style="display:none;">🔍</span>
         </form>
       </div>
       <div class="theme-toggle" id="themeToggle"></div>
@@ -1121,7 +1191,8 @@ h1 {
   <script >
       const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
 // const API_BASE_URL = 'http://localhost:8000/api/weather';
-
+const header = document.querySelector('.site-header');
+const compactSearchIcon = document.querySelector('.compact-search-icon');
 const unitSelect = document.getElementById('unitSelect');
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
@@ -1140,6 +1211,44 @@ unitSelect.addEventListener('change', () => {
     localStorage.setItem('unit', unitSelect.value);
     loadWeather(searchInput.value.trim());
 })
+//       NEW START
+let headerIsCompact = false;
+
+// Smooth, no-blink scroll behavior with hysteresis
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+
+  // Shrink once we’re clearly scrolled down
+  if (!headerIsCompact && y > 80) {
+    header.classList.add('site-header--compact');
+    headerIsCompact = true;
+  }
+  // Expand only when we come almost all the way back up
+  else if (headerIsCompact && y < 20) {
+    header.classList.remove('site-header--compact');
+    headerIsCompact = false;
+  }
+});
+
+// Scroll to top + focus search when tapping the icon
+if (compactSearchIcon) {
+  compactSearchIcon.addEventListener('click', () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    // Let scroll handler remove compact class once we're at the top,
+    // but we can also force it right away for snappier feel:
+    header.classList.remove('site-header--compact');
+    headerIsCompact = false;
+
+    setTimeout(() => {
+      const input = document.getElementById('searchInput');
+      if (input) input.focus();
+    }, 300);
+  });
+}
 
 // Theme Management
 function initTheme() {
@@ -1187,6 +1296,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+//       NEW END
 
 async function loadWeather(query = null, lat = null, lon = null) {
   showLoading();
