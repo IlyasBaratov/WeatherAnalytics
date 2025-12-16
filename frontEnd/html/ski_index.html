@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ski Resort Forecast</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0c0f23; --bg-soft:#141833; --card:#1b2142; --card-2:#232b57;
+      --text:#f2f4ff; --muted:#b5b9d8; --primary:#5b7cff;
+      --shadow:0 12px 30px rgba(10,14,46,.35);
+      --radius-xl:18px; --radius:12px;
+
+      --ok:#19c37d;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --line: rgba(255,255,255,.08);
+    }
+
+    [data-theme="light"]{
+      --bg:#f7f8ff; --bg-soft:#eef1ff; --card:#ffffff; --card-2:#f3f5ff;
+      --text:#10162b; --muted:#5d6787; --primary:#4f63ff;
+      --shadow:0 10px 24px rgba(20,30,80,.12);
+      --line: rgba(10,15,40,.10);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:radial-gradient(1200px 800px at 20% -10%,#1a1f44 0%,var(--bg) 60%) fixed;
+      color:var(--text);
+    }
+
+    /* Header */
+    .site-header{
+      max-width:1100px;
+      margin:42px auto 24px;
+      padding:0 20px;
+      text-align:center;
+      position:relative;
+    }
+    .site-header h1{
+      font-weight:800;
+      margin:0 0 16px;
+      font-size:clamp(28px,4vw,44px);
+      letter-spacing:-0.02em;
+    }
+    .sub{
+      margin:0 0 18px;
+      color:var(--muted);
+      font-weight:600;
+      font-size:0.98rem;
+    }
+
+    .search{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .search__input{
+      width:min(720px,100%);
+      padding:16px 18px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:var(--bg-soft);
+      color:var(--text);
+      outline:none;
+      font-size:1rem;
+      font-weight:600;
+    }
+    .pill{
+      padding:14px 14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      font-weight:800;
+      cursor:pointer;
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      min-width: 132px;
+    }
+    [data-theme="light"] .pill{ background: rgba(10,15,40,.04); }
+
+    .btn{
+      padding:14px 20px;
+      border:0;
+      border-radius:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .btn--primary{
+      background:var(--primary);
+      color:#fff;
+      box-shadow:var(--shadow);
+    }
+    .btn--secondary{
+      background:#2b305c;
+      color:#fff;
+      border:1px solid var(--line);
+    }
+    [data-theme="light"] .btn--secondary{
+      background:#eef1ff;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .top-actions{
+      position:absolute;
+      right:20px;
+      top:6px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .toggle{
+      width:54px;
+      height:30px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      position:relative;
+    }
+    .toggle::after{
+      content:"🌙";
+      position:absolute;
+      top:50%;
+      left:6px;
+      transform:translateY(-50%);
+      width:22px;
+      height:22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:50%;
+      background: var(--primary);
+      color:#fff;
+      font-size:12px;
+      transition: left .25s ease, content .25s ease;
+      box-shadow: var(--shadow);
+    }
+    [data-theme="light"] .toggle::after{
+      content:"☀️";
+      left: calc(100% - 28px);
+    }
+
+    .container{
+      max-width:1200px;
+      padding:0 20px 40px;
+      margin:0 auto;
+    }
+
+    /* Loading and Error */
+    .loading, .error {
+      text-align:center;
+      padding: 2.4rem 1.6rem;
+      margin: 1.4rem auto;
+      max-width: 760px;
+      border-radius: var(--radius-xl);
+      border:1px solid var(--line);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .loading p{
+      font-size:1.15rem;
+      color:var(--muted);
+      margin:0;
+      font-weight:700;
+      opacity:.9;
+      animation:pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.55} }
+    .error{
+      background: linear-gradient(135deg, rgba(239,68,68,.20), rgba(239,68,68,.05));
+      border:1px solid rgba(239,68,68,.45);
+    }
+    .error p{ margin:0; font-weight:800; color:#ffd1d1; }
+
+    /* Layout */
+    .layout{ display:grid; grid-template-columns:1.5fr .9fr; gap:24px; }
+    @media (max-width:980px){ .layout{ grid-template-columns:1fr; } .top-actions{ position:static; justify-content:center; margin-bottom:12px; } }
+
+    .card{
+      background: var(--card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      border:1px solid var(--line);
+    }
+    .gradient{
+      background:
+        radial-gradient(800px 420px at -10% -20%, rgba(91,124,255,.55) 0%, transparent 60%),
+        radial-gradient(680px 380px at 120% 10%, rgba(122,92,255,.55) 0%, transparent 55%),
+        linear-gradient(135deg, var(--card-2), var(--card));
+      overflow:hidden;
+    }
+
+    /* Current */
+    .current{ display:grid; grid-template-columns:1fr auto; align-items:center; padding:26px 28px; gap:18px; min-height:170px; }
+    .current__place{ margin:0 0 6px; font-size:clamp(20px,2.6vw,28px); font-weight:800; letter-spacing:-0.02em; }
+    .current__date{ margin:0; color:var(--muted); font-weight:700; }
+    .current__meta-row{ display:flex; flex-wrap:wrap; gap:10px 12px; align-items:center; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:800;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      font-size:.9rem;
+    }
+    [data-theme="light"] .badge{ background: rgba(10,15,40,.03); }
+
+    .link{
+      color: var(--text);
+      text-decoration:none;
+      border-bottom:1px dashed rgba(255,255,255,.35);
+      font-weight:800;
+    }
+    [data-theme="light"] .link{ border-bottom-color: rgba(10,15,40,.35); }
+
+    .big-icon{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:14px;
+    }
+    .big-icon__emoji{ font-size:40px; }
+    .big-icon__value{ font-size:clamp(38px,5.8vw,60px); font-weight:900; letter-spacing:-0.03em; }
+
+    /* Stats */
+    .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:16px; }
+    @media (max-width:720px){ .stats{ grid-template-columns:repeat(2,1fr); } }
+    .stat{ padding:18px; }
+    .stat__label{ margin:0 0 6px; font-weight:800; color:var(--muted); font-size:.92rem; }
+    .stat__value{ margin:0; font-size:22px; font-weight:900; letter-spacing:-0.02em; }
+
+    /* Panels / sections */
+    .panel{ padding:18px; }
+    .panel__head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:10px; }
+    .panel__head h3{ margin:0; font-size:1rem; font-weight:900; color:var(--muted); letter-spacing:.02em; text-transform:uppercase; }
+
+    /* Hourly list */
+    .hourly{ list-style:none; padding:0; margin:0; max-height:650px; overflow:auto; }
+    .hour{
+      display:grid;
+      grid-template-columns: 78px 1fr auto;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:12px;
+      background: rgba(255,255,255,.03);
+      margin:8px 0;
+      border:1px solid var(--line);
+    }
+    [data-theme="light"] .hour{ background: rgba(10,15,40,.03); }
+    .hour__time{ color:var(--muted); font-weight:900; }
+    .hour__mid{ display:flex; flex-direction:column; gap:4px; }
+    .hour__summary{ font-weight:900; }
+    .hour__meta{ color:var(--muted); font-weight:700; font-size:.9rem; display:flex; flex-wrap:wrap; gap:10px; }
+    .hour__temp{ font-weight:900; font-size:1.05rem; }
+
+    /* Forecast 5-day */
+    .forecast-grid{
+      display:grid;
+      gap:12px;
+      grid-template-columns: 1fr;
+    }
+    .daycard{
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:14px 14px;
+    }
+    [data-theme="light"] .daycard{ background: rgba(10,15,40,.03); }
+
+    .daycard__top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+    }
+    .dow{
+      font-weight:900;
+      text-transform:capitalize;
+      letter-spacing:-0.01em;
+      font-size:1.05rem;
+    }
+    .triples{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width:720px){ .triples{ grid-template-columns: 1fr; } }
+    .slot{
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      padding:10px 10px;
+    }
+    [data-theme="light"] .slot{ background: rgba(10,15,40,.02); }
+
+    .slot__title{
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-size:.78rem;
+      margin-bottom:6px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .slot__main{ font-weight:900; margin-bottom:6px; }
+    .kv{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      color:var(--muted);
+      font-weight:700;
+      font-size:.9rem;
+    }
+
+    /* Summary blocks */
+    .summary{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:980px){ .summary{ grid-template-columns: 1fr; } }
+    .summary-card{
+      padding:18px;
+      border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    [data-theme="light"] .summary-card{ background: rgba(10,15,40,.03); }
+    .summary-card h4{
+      margin:0 0 8px;
+      font-size:1rem;
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.02em;
+    }
+    .summary-card p{
+      margin:0;
+      font-weight:700;
+      line-height:1.55;
+    }
+
+    /* Footer */
+    .site-footer{ text-align:center; color:var(--muted); padding:28px 0 40px; }
+  </style>
+</head>
+
+<body data-theme="dark">
+  <header class="site-header">
+    <div class="top-actions">
+<!--      <button class="btn btn&#45;&#45;secondary" id="btnExample" type="button" title="Load example">Example</button>-->
+      <div class="toggle" id="themeToggle" title="Toggle theme"></div>
+    </div>
+
+    <h1>Ski Resort Forecast</h1>
+    <p class="sub">Search a resort, choose units + elevation, and load the full forecast.</p>
+
+    <form class="search" id="searchForm">
+      <input class="search__input" id="searchInput" type="text" placeholder="Search for a ski resort… (e.g., Stevens Pass)" />
+        <button class="btn btn--primary" onclick="window.location.href='index.html'">
+          ☁️ Weather Analytics
+        </button>
+      <select id="unitSelect" class="btn btn--secondary" title="Units">
+        <option value="i" selected>Imperial (i)</option>
+        <option value="m">Metric (m)</option>
+      </select>
+
+      <select id="elevationSelect" class="btn btn--secondary" title="Elevation">
+        <option value="top" selected>Top</option>
+        <option value="mid">Mid</option>
+        <option value="base">Base</option>
+      </select>
+
+
+      <button class="btn btn--primary" type="submit">Load Full</button>
+    </form>
+  </header>
+
+  <main class="container">
+    <div id="loading" class="loading" style="display:none;">
+      <p>Loading ski forecast…</p>
+    </div>
+
+    <div id="error" class="error" style="display:none;">
+      <p></p>
+    </div>
+
+
+    <section class="layout" id="content" style="display:none;">
+      <!-- LEFT -->
+      <div class="left">
+        <article class="card gradient current">
+          <div>
+            <h2 class="current__place" id="resortName">--</h2>
+            <p class="current__date" id="resortRegion">--</p>
+
+            <div class="current__meta-row" style="margin-top:12px;">
+              <span class="badge" id="elevTop">Top: --</span>
+              <span class="badge" id="elevMid">Mid: --</span>
+              <span class="badge" id="elevBot">Base: --</span>
+              <a class="badge link" id="resortUrl" href="#" target="_blank" rel="noopener">Open resort page</a>
+            </div>
+
+          </div>
+
+          <div class="big-icon">
+            <div style="text-align:right;">
+              <div class="big-icon__emoji" id="headlineEmoji">🏔️</div>
+              <div class="big-icon__value" id="headlineValue">--</div>
+              <div style="color:var(--muted); font-weight:800; margin-top:2px;" id="headlineLabel">Fresh Snow</div>
+            </div>
+          </div>
+        </article>
+
+        <section class="stats">
+          <div class="card stat">
+            <p class="stat__label">Top Snow Depth</p>
+            <p class="stat__value" id="topDepth">--</p>
+          </div>
+          <div class="card stat">
+            <p class="stat__label">Base Snow Depth</p>
+            <p class="stat__value" id="botDepth">--</p>
+          </div>
+          <div class="card stat">
+            <p class="stat__label">Fresh Snowfall</p>
+            <p class="stat__value" id="freshSnow">--</p>
+          </div>
+          <div class="card stat">
+            <p class="stat__label">Last Snowfall</p>
+            <p class="stat__value" id="lastSnow">--</p>
+          </div>
+        </section>
+
+        <section class="card panel" style="margin-top:16px;">
+          <div class="panel__head">
+            <h3>5-Day Forecast (AM / PM / Night)</h3>
+            <span style="color:var(--muted); font-weight:800;" id="forecastHint">--</span>
+          </div>
+          <div class="forecast-grid" id="forecastGrid"></div>
+
+          <div class="summary" id="summaryWrap" style="display:none;">
+            <div class="summary-card">
+              <h4>Summary (Days 1–3)</h4>
+              <p id="summary3Day">--</p>
+            </div>
+            <div class="summary-card">
+              <h4>Summary (Days 4–6)</h4>
+              <p id="summary4To6">--</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <aside class="right">
+        <div class="card panel">
+          <div class="panel__head">
+            <h3>Hourly Forecast</h3>
+            <span style="color:var(--muted); font-weight:800;" id="hourlyCount">--</span>
+          </div>
+          <ul class="hourly" id="hourlyList"></ul>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <small>Built by Mr. Baratov</small>
+  </footer>
+
+  <script>
+    // -------- CONFIG --------
+    // const API_BASE_URL = "http://localhost:8000/api/ski";
+    const API_BASE_URL = "https://api.weatherdemo.online/api/ski";
+    // -------- DOM --------
+    const searchForm = document.getElementById("searchForm");
+    const searchInput = document.getElementById("searchInput");
+    const unitSelect = document.getElementById("unitSelect");
+    const elevationSelect = document.getElementById("elevationSelect");
+    const btnExample = document.getElementById("btnExample");
+    const themeToggle = document.getElementById("themeToggle");
+
+    const loadingEl = document.getElementById("loading");
+    const errorEl = document.getElementById("error");
+    const contentEl = document.getElementById("content");
+
+    // Header / current
+    const resortNameEl = document.getElementById("resortName");
+    const resortRegionEl = document.getElementById("resortRegion");
+    const elevTopEl = document.getElementById("elevTop");
+    const elevMidEl = document.getElementById("elevMid");
+    const elevBotEl = document.getElementById("elevBot");
+    const resortUrlEl = document.getElementById("resortUrl");
+
+    // Headline
+    const headlineEmojiEl = document.getElementById("headlineEmoji");
+    const headlineValueEl = document.getElementById("headlineValue");
+    const headlineLabelEl = document.getElementById("headlineLabel");
+
+    // Stats
+    const topDepthEl = document.getElementById("topDepth");
+    const botDepthEl = document.getElementById("botDepth");
+    const freshSnowEl = document.getElementById("freshSnow");
+    const lastSnowEl = document.getElementById("lastSnow");
+
+    // Forecast
+    const forecastGridEl = document.getElementById("forecastGrid");
+    const forecastHintEl = document.getElementById("forecastHint");
+    const summaryWrapEl = document.getElementById("summaryWrap");
+    const summary3DayEl = document.getElementById("summary3Day");
+    const summary4To6El = document.getElementById("summary4To6");
+
+    // Hourly
+    const hourlyListEl = document.getElementById("hourlyList");
+    const hourlyCountEl = document.getElementById("hourlyCount");
+
+    // -------- THEME --------
+    function initTheme(){
+      const saved = localStorage.getItem("ski_theme") || "dark";
+      document.body.setAttribute("data-theme", saved);
+    }
+    function toggleTheme(){
+      const cur = document.body.getAttribute("data-theme") || "dark";
+      const next = cur === "dark" ? "light" : "dark";
+      document.body.setAttribute("data-theme", next);
+      localStorage.setItem("ski_theme", next);
+    }
+
+    // -------- HELPERS --------
+    function showLoading(){
+      loadingEl.style.display = "block";
+      errorEl.style.display = "none";
+      contentEl.style.display = "none";
+    }
+    function showError(msg){
+      errorEl.style.display = "block";
+      errorEl.querySelector("p").textContent = "Error: " + msg;
+      loadingEl.style.display = "none";
+      contentEl.style.display = "none";
+    }
+    function showContent(){
+      loadingEl.style.display = "none";
+      errorEl.style.display = "none";
+      contentEl.style.display = "grid";
+    }
+
+    function safeText(v, fallback="--"){
+      if (v === null || v === undefined || v === "") return fallback;
+      return String(v);
+    }
+
+    // very small emoji mapper for "summary" strings
+    function emojiForSummary(summary){
+      const s = (summary || "").toLowerCase();
+      if (s.includes("heavy snow")) return "🌨️";
+      if (s.includes("mod. snow") || s.includes("moderate snow")) return "🌨️";
+      if (s.includes("light snow")) return "🌨️";
+      if (s.includes("snow")) return "🌨️";
+      if (s.includes("heavy rain")) return "🌧️";
+      if (s.includes("rain")) return "🌧️";
+      if (s.includes("clear")) return "☀️";
+      if (s.includes("cloud")) return "☁️";
+      if (s.includes("storm") || s.includes("thunder")) return "🌩️";
+      if (s.includes("fog") || s.includes("mist") || s.includes("haze")) return "🌫️";
+      return "🏔️";
+    }
+
+    function buildKV(obj){
+      // show only the useful bits (matches your response.json keys)
+      const parts = [];
+      if (obj.windSpeed) parts.push(`💨 ${obj.windSpeed} ${obj.windDirection ? obj.windDirection : ""}`.trim());
+      if (obj.snow) parts.push(`❄️ ${obj.snow}`);
+      if (obj.rain) parts.push(`🌧️ ${obj.rain}`);
+      if (obj.maxTemp) parts.push(`🌡️ ${obj.maxTemp}${obj.minTemp ? ` / ${obj.minTemp}` : ""}`);
+      if (obj.windChill) parts.push(`🥶 ${obj.windChill}`);
+      if (obj.humidity) parts.push(`💧 ${obj.humidity}`);
+      if (obj.freezeLevel) parts.push(`🧊 ${obj.freezeLevel}`);
+      return parts;
+    }
+
+    // -------- RENDER --------
+    function render(data){
+      // The structure is exactly like your sample response.json
+      // data.hourly.basicInfo, data.snow.basicInfo, data.forecast.basicInfo etc.
+      const info =
+        data?.hourly?.basicInfo ||
+        data?.snow?.basicInfo ||
+        data?.forecast?.basicInfo ||
+        {};
+
+      const name = info.name || data?.query || data?.geo?.place || "--";
+      const region = info.region || "--";
+      const url = info.url || "#";
+
+      resortNameEl.textContent = safeText(name);
+      resortRegionEl.textContent = safeText(region);
+
+      elevTopEl.textContent = `Top: ${safeText(info.topLiftElevation)}`;
+      elevMidEl.textContent = `Mid: ${safeText(info.midLiftElevation)}`;
+      elevBotEl.textContent = `Base: ${safeText(info.botLiftElevation)}`;
+
+      resortUrlEl.href = url;
+      resortUrlEl.style.pointerEvents = url && url !== "#" ? "auto" : "none";
+      resortUrlEl.textContent = url && url !== "#" ? "Open resort page" : "No resort link";
+
+      // Snow stats
+      topDepthEl.textContent = safeText(data?.snow?.topSnowDepth);
+      botDepthEl.textContent = safeText(data?.snow?.botSnowDepth);
+      freshSnowEl.textContent = safeText(data?.snow?.freshSnowfall);
+      lastSnowEl.textContent = safeText(data?.snow?.lastSnowfallDate);
+
+      // Headline: use Fresh Snowfall as the big number
+      headlineEmojiEl.textContent = "❄️";
+      headlineValueEl.textContent = safeText(data?.snow?.freshSnowfall);
+      headlineLabelEl.textContent = "Fresh Snowfall";
+
+      // Hourly list
+      const hourlyArr = data?.hourly?.forecast || [];
+      hourlyCountEl.textContent = `${hourlyArr.length} hours`;
+      hourlyListEl.innerHTML = "";
+
+      if (!hourlyArr.length){
+        hourlyListEl.innerHTML = `<li class="hour"><div class="hour__time">--</div><div class="hour__mid"><div class="hour__summary">No hourly data</div><div class="hour__meta">Try another resort.</div></div><div class="hour__temp">--</div></li>`;
+      } else {
+        hourlyArr.forEach(h => {
+          const li = document.createElement("li");
+          li.className = "hour";
+
+          const summary = safeText(h.summary, "--");
+          const emoji = emojiForSummary(summary);
+
+          const meta = [
+            h.windSpeed ? `💨 ${h.windSpeed} ${h.windDirection || ""}`.trim() : null,
+            h.snow ? `❄️ ${h.snow}` : null,
+            h.rain ? `🌧️ ${h.rain}` : null,
+            h.humidity ? `💧 ${h.humidity}` : null,
+            h.freezeLevel ? `🧊 ${h.freezeLevel}` : null,
+          ].filter(Boolean).join(" · ");
+
+          li.innerHTML = `
+            <div class="hour__time">${safeText(h.time)}</div>
+            <div class="hour__mid">
+              <div class="hour__summary">${emoji} ${summary}</div>
+              <div class="hour__meta">${meta || ""}</div>
+            </div>
+            <div class="hour__temp">${safeText(h.maxTemp)}</div>
+          `;
+          hourlyListEl.appendChild(li);
+        });
+      }
+
+      // 5-day forecast grid
+      const days = data?.forecast?.forecast5Day || [];
+      forecastGridEl.innerHTML = "";
+
+      // hint: show selected elevation + units for clarity
+      forecastHintEl.textContent = `Units: ${unitSelect.value} · Elevation: ${elevationSelect.value}`;
+
+      if (!days.length){
+        forecastGridEl.innerHTML = `<div class="daycard">No 5-day forecast data available.</div>`;
+      } else {
+        days.forEach(d => {
+          const dayName = safeText(d.dayOfWeek).toLowerCase();
+
+          const am = d.am || {};
+          const pm = d.pm || {};
+          const night = d.night || {};
+
+          const dayEmoji = emojiForSummary(am.summary || pm.summary || night.summary);
+
+          const card = document.createElement("div");
+          card.className = "daycard";
+
+          card.innerHTML = `
+            <div class="daycard__top">
+              <div class="dow">${dayEmoji} ${dayName}</div>
+              <div style="color:var(--muted); font-weight:900;">
+                ${safeText(am.maxTemp, "--")} / ${safeText(night.minTemp || pm.minTemp || am.minTemp, "--")}
+              </div>
+            </div>
+
+            <div class="triples">
+              ${renderSlot("AM", am)}
+              ${renderSlot("PM", pm)}
+              ${renderSlot("Night", night)}
+            </div>
+          `;
+
+          forecastGridEl.appendChild(card);
+        });
+      }
+
+      // summaries
+      const s3 = data?.forecast?.summary3Day;
+      const s46 = data?.forecast?.summaryDays4To6;
+
+      if (s3 || s46){
+        summaryWrapEl.style.display = "grid";
+        summary3DayEl.textContent = safeText(s3, "—");
+        summary4To6El.textContent = safeText(s46, "—");
+      } else {
+        summaryWrapEl.style.display = "none";
+      }
+
+      showContent();
+    }
+
+    function renderSlot(label, obj){
+      const summary = safeText(obj.summary, "--");
+      const emoji = emojiForSummary(summary);
+      const kv = buildKV(obj);
+
+      const kvHtml = kv.length
+        ? `<div class="kv">${kv.map(x => `<span>${x}</span>`).join("")}</div>`
+        : `<div class="kv"><span style="opacity:.8">No details</span></div>`;
+
+      return `
+        <div class="slot">
+          <div class="slot__title">
+            <span>${label}</span>
+            <span style="opacity:.9">${emoji}</span>
+          </div>
+          <div class="slot__main">${summary}</div>
+          ${kvHtml}
+        </div>
+      `;
+    }
+
+    // -------- FETCH --------
+    async function loadResort(query){
+      showLoading();
+      try{
+        const q = (query || "").trim();
+        if (!q) throw new Error("Please enter a resort name.");
+
+        const params = new URLSearchParams();
+        params.set("q", q);
+        params.set("units", unitSelect.value || "i");
+        params.set("elevation", elevationSelect.value || "top");
+
+        const url = `${API_BASE_URL}/full?${params.toString()}`;
+        const res = await fetch(url);
+
+        if (!res.ok){
+          const text = await res.text().catch(() => "");
+          throw new Error(`${res.status} ${res.statusText}${text ? " — " + text : ""}`);
+        }
+
+        const data = await res.json();
+        render(data);
+      } catch(err){
+        console.error(err);
+        showError(err.message || "Failed to load resort data.");
+      }
+    }
+
+    // -------- INIT --------
+    document.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+
+      // saved preferences
+      unitSelect.value = localStorage.getItem("ski_units") || "i";
+      elevationSelect.value = localStorage.getItem("ski_elevation") || "top";
+
+      unitSelect.addEventListener("change", () => {
+        localStorage.setItem("ski_units", unitSelect.value);
+        // auto reload if a resort is currently in the input
+        const q = searchInput.value.trim();
+        if (q) loadResort(q);
+      });
+
+      elevationSelect.addEventListener("change", () => {
+        localStorage.setItem("ski_elevation", elevationSelect.value);
+        const q = searchInput.value.trim();
+        if (q) loadResort(q);
+      });
+
+      themeToggle.addEventListener("click", toggleTheme);
+
+      searchForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        loadResort(searchInput.value);
+      });
+
+      btnExample.addEventListener("click", () => {
+        searchInput.value = "Stevens Pass";
+        unitSelect.value = "i";
+        elevationSelect.value = "top";
+        localStorage.setItem("ski_units", "i");
+        localStorage.setItem("ski_elevation", "top");
+        loadResort("Stevens Pass");
+      });
+    });
+  </script>
+</body>
+</html>

@@ -5,6 +5,7 @@ from pydantic import Field
 
 class Settings(BaseSettings):
     api_weather_key: str = Field("", env="API_WEATHER_KEY")
+    api_ski_key: str = Field("", env="API_SKI_KEY")
     # Timeout (seconds) to use for upstream API requests
     api_timeout: float = Field(10.0, env="API_TIMEOUT")
     default_lat: float = Field(47.6061, env = "DEFAULT_LAT")
