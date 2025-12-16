@@ -1,6 +1,10 @@
-# 🌦 Weather Data Dashboard
+# 🌦️🏔️ Weather + Ski Analytics Dashboard (FastAPI)
 
-A **FastAPI-based Weather Analytics Platform** integrated with the **OpenWeather API** and **YouTube Data API** to deliver real-time weather data, forecasts, and local news videos with persistent storage, clean architecture, and a modern frontend.
+A **FastAPI-based analytics platform** with two modules:
+
+- **Weather Analytics** (OpenWeather API + optional YouTube local news videos)
+- **Ski Resort Analytics** (RapidAPI “ski-resort-forecast” data: snow + hourly + multi-day forecast)
+
 
 **🌐 Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)  
 **📌 API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)

@@ -62,3 +62,26 @@ Content-Type: application/json
 }
 
 ###
+# -----------------------------
+# SKI
+# -----------------------------
+
+### Ski: full resort package (recommended)
+GET http://127.0.0.1:8000/api/ski/full?q=Stevens%20Pass&units=i&elevation=top
+Accept: application/json
+
+### Ski: hourly only
+GET http://127.0.0.1:8000/api/ski/hourly?q=Stevens%20Pass&units=i&elevation=top
+Accept: application/json
+
+### Ski: daily forecast only
+GET http://127.0.0.1:8000/api/ski/forecast?q=Stevens%20Pass&units=i&elevation=top
+Accept: application/json
+
+### Ski: snow conditions only
+GET http://127.0.0.1:8000/api/ski/snow?q=Stevens%20Pass&units=i
+Accept: application/json
+
+### Ski: list resorts by region
+GET http://127.0.0.1:8000/api/ski/resorts?region=USA-Washington
+Accept: application/json
