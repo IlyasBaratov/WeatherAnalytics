@@ -6,8 +6,8 @@ A **FastAPI-based analytics platform** with two modules:
 - **Ski Resort Analytics** (RapidAPI “ski-resort-forecast” data: snow + hourly + multi-day forecast)
 
 
-**🌐 Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)  
-**📌 API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
+**🌐 Azure App (UI + API):** https://app-weather-analytics.azurewebsites.net  
+**📚 API Docs (Swagger):** https://app-weather-analytics.azurewebsites.net/api/docs
 
 ---
 
@@ -230,29 +230,22 @@ DATABASE_URL=sqlite:///./weather.db
 
 #### 5️⃣ Run the application
 
-##### Option A: Backend + Frontend Separately
+The backend serves the UI and the API from the same process.
 
-**Terminal 1 - Backend:**
+##### Option A: Dev mode (recommended)
 ```bash
 uvicorn backEnd.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**Terminal 2 - Frontend:**
-```bash
-cd frontEnd
-python -m http.server 3000
-```
-
-##### Option B: Production Mode
+##### Option B: Production mode
 ```bash
 uvicorn backEnd.main:app --host 0.0.0.0 --port 8000
 ```
 
 #### 6️⃣ Access the App
-- **Frontend:** http://localhost:3000/html/index.html
+- **UI:** http://localhost:8000/
 - **API Docs:** http://localhost:8000/api/docs
-- **Live Demo:** https://weatherdemo.online
-- **Live API:** https://api.weatherdemo.online
+- **API Health:** http://localhost:8000/api/health
 
 ---
 
@@ -296,7 +289,7 @@ WeatherProject/
 
 ## 🌐 API Documentation
 
-**Base URL (Production):** `https://api.weatherdemo.online/api/weather`  
+**Base URL (Production):** `https://app-weather-analytics.azurewebsites.net/api/weather`  
 **Base URL (Local):** `http://localhost:8000/api/weather`
 
 ---
@@ -323,16 +316,16 @@ Fetch current weather summary with hourly and daily forecasts, plus local news v
 **Example Requests:**
 ```bash
 # City name
-curl "https://api.weatherdemo.online/api/weather/summary?q=Seattle"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/summary?q=Seattle"
 
 # City with custom days
-curl "https://api.weatherdemo.online/api/weather/summary?q=London&days=5"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/summary?q=London&days=5"
 
 # Coordinates
-curl "https://api.weatherdemo.online/api/weather/summary?lat=47.6061&lon=-122.3328"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/summary?lat=47.6061&lon=-122.3328"
 
 # Default location
-curl "https://api.weatherdemo.online/api/weather/summary"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/summary"
 ```
 
 **Example Response:**
@@ -390,10 +383,10 @@ Fetch and store weather forecasts for a date range using default location.
 **Example Requests:**
 ```bash
 # Fetch 5 days of weather
-curl "https://api.weatherdemo.online/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-20"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-20"
 
 # Fetch full week
-curl "https://api.weatherdemo.online/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-22"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-22"
 ```
 
 ---
@@ -483,7 +476,7 @@ DELETE /api/weather/favorites/{favorite_id}
 ### Using cURL
 ```bash
 # Test weather summary with videos
-curl "https://api.weatherdemo.online/api/weather/summary?q=Seattle"
+curl "https://app-weather-analytics.azurewebsites.net/api/weather/summary?q=Seattle"
 
 # Test date range (local)
 curl "http://localhost:8000/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-20"
@@ -495,7 +488,7 @@ import requests
 
 # Fetch weather with videos
 response = requests.get(
-    "https://api.weatherdemo.online/api/weather/summary",
+  "https://app-weather-analytics.azurewebsites.net/api/weather/summary",
     params={"q": "Seattle"}
 )
 data = response.json()
@@ -510,8 +503,8 @@ for video in data.get('videos', []):
 ### Interactive API Docs
 
 Visit the auto-generated documentation:
-- **Swagger UI:** https://api.weatherdemo.online/api/docs
-- **ReDoc:** https://api.weatherdemo.online/api/redoc
+- **Swagger UI:** https://app-weather-analytics.azurewebsites.net/api/docs
+- **ReDoc:** https://app-weather-analytics.azurewebsites.net/api/redoc
 
 ---
 
@@ -566,17 +559,16 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For questions, issues, or feature requests:
 - 🐛 **Issues:** [GitHub Issues](https://github.com/IlyasBaratov/WeatherAnalytics/issues)
 - 📧 **Email:** Contact through GitHub
-- 🌐 **Frontend:** https://weatherdemo.online
-- 📌 **API:** https://api.weatherdemo.online
+- 🌐 **Azure App (UI + API):** https://app-weather-analytics.azurewebsites.net
 
 ---
 
 ## 🎯 Quick Links
 
-- 🌐 **Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)
-- 📌 **API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
-- 📚 **API Docs (Swagger):** [https://api.weatherdemo.online/api/docs](https://api.weatherdemo.online/api/docs)
-- 📖 **API Docs (ReDoc):** [https://api.weatherdemo.online/api/redoc](https://api.weatherdemo.online/api/redoc)
+- 🌐 **Azure App (UI + API):** https://app-weather-analytics.azurewebsites.net
+- 📌 **Weather API Base:** https://app-weather-analytics.azurewebsites.net/api/weather
+- 📚 **API Docs (Swagger):** https://app-weather-analytics.azurewebsites.net/api/docs
+- 📖 **API Docs (ReDoc):** https://app-weather-analytics.azurewebsites.net/api/redoc
 - 🔗 **GitHub:** [https://github.com/IlyasBaratov/WeatherAnalytics](https://github.com/IlyasBaratov/WeatherAnalytics)
 - 🌤️ **OpenWeather API:** [https://openweathermap.org/api](https://openweathermap.org/api)
 - 📺 **YouTube Data API:** [https://developers.google.com/youtube/v3](https://developers.google.com/youtube/v3)
