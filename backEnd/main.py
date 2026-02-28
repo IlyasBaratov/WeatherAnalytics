@@ -1,8 +1,11 @@
 import pathlib
-from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI
+from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, Response
 
 from backEnd.api.routers import weather, ski, pages
 from backEnd.core.database import engine, Base
@@ -10,7 +13,16 @@ from backEnd.core.database import engine, Base
 BASE_DIR = pathlib.Path(__file__).resolve().parent
 PROJECT_DIR = BASE_DIR.parent
 
-app = FastAPI(title="Weather API")
+# Host both UI and API from the same container:
+# - UI (static files): /
+# - API:              /api/*
+# - Swagger:          /api/docs
+app = FastAPI(
+    title="Weather Portal API",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
+)
 
 # Enable CORS so the frontEnd can call API independently
 app.add_middleware(
@@ -21,9 +33,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include only the API router (no template rendering)
+# Include API routers
 app.include_router(weather.router)
 app.include_router(ski.router)
+
+
+@app.get("/env.js", include_in_schema=False)
+async def env_js() -> Response:
+    api_base_url = os.getenv("API_BASE_URL")
+    if not api_base_url:
+        api_base_url = "/api/weather"
+    payload = f"window.__ENV__ = {{ API_BASE_URL: {api_base_url!r} }};\n"
+    return Response(content=payload, media_type="application/javascript")
 
 @app.on_event("startup")
 def on_startup():
@@ -34,7 +55,39 @@ async def on_shutdown():
     await ski.cleanup_ski_service()
 
 
-# Health check endpoint
-@app.get("/")
-async def root():
-    return {"message": "Weather API is running", "docs": "/docs"}
+@app.get("/api/health", tags=["health"])
+async def health():
+    return {"status": "ok"}
+
+
+# Static UI from the repo folder: ./frontEnd
+frontend_dir = PROJECT_DIR / "frontEnd"
+frontend_html_dir = frontend_dir / "html"
+frontend_css_dir = frontend_dir / "css"
+frontend_js_dir = frontend_dir / "js"
+
+if frontend_css_dir.exists():
+    app.mount("/css", StaticFiles(directory=str(frontend_css_dir)), name="css")
+if frontend_js_dir.exists():
+    app.mount("/js", StaticFiles(directory=str(frontend_js_dir)), name="js")
+
+
+@app.get("/", include_in_schema=False)
+async def frontend_index() -> FileResponse:
+    index_path = frontend_html_dir / "index.html"
+    if not index_path.exists():
+        raise HTTPException(status_code=404, detail="index.html not found")
+    return FileResponse(str(index_path), media_type="text/html")
+
+
+@app.get("/index.html", include_in_schema=False)
+async def frontend_index_html() -> FileResponse:
+    return await frontend_index()
+
+
+@app.get("/ski_index.html", include_in_schema=False)
+async def frontend_ski() -> FileResponse:
+    ski_path = frontend_html_dir / "ski_index.html"
+    if not ski_path.exists():
+        raise HTTPException(status_code=404, detail="ski_index.html not found")
+    return FileResponse(str(ski_path), media_type="text/html")

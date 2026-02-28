@@ -250,7 +250,7 @@ uvicorn backEnd.main:app --host 0.0.0.0 --port 8000
 
 #### 6️⃣ Access the App
 - **Frontend:** http://localhost:3000/html/index.html
-- **API Docs:** http://localhost:8000/docs
+- **API Docs:** http://localhost:8000/api/docs
 - **Live Demo:** https://weatherdemo.online
 - **Live API:** https://api.weatherdemo.online
 
@@ -510,8 +510,8 @@ for video in data.get('videos', []):
 ### Interactive API Docs
 
 Visit the auto-generated documentation:
-- **Swagger UI:** https://api.weatherdemo.online/docs
-- **ReDoc:** https://api.weatherdemo.online/redoc
+- **Swagger UI:** https://api.weatherdemo.online/api/docs
+- **ReDoc:** https://api.weatherdemo.online/api/redoc
 
 ---
 
@@ -575,8 +575,8 @@ For questions, issues, or feature requests:
 
 - 🌐 **Live Demo:** [https://weatherdemo.online](https://weatherdemo.online)
 - 📌 **API Base URL:** [https://api.weatherdemo.online](https://api.weatherdemo.online)
-- 📚 **API Docs (Swagger):** [https://api.weatherdemo.online/docs](https://api.weatherdemo.online/docs)
-- 📖 **API Docs (ReDoc):** [https://api.weatherdemo.online/redoc](https://api.weatherdemo.online/redoc)
+- 📚 **API Docs (Swagger):** [https://api.weatherdemo.online/api/docs](https://api.weatherdemo.online/api/docs)
+- 📖 **API Docs (ReDoc):** [https://api.weatherdemo.online/api/redoc](https://api.weatherdemo.online/api/redoc)
 - 🔗 **GitHub:** [https://github.com/IlyasBaratov/WeatherAnalytics](https://github.com/IlyasBaratov/WeatherAnalytics)
 - 🌤️ **OpenWeather API:** [https://openweathermap.org/api](https://openweathermap.org/api)
 - 📺 **YouTube Data API:** [https://developers.google.com/youtube/v3](https://developers.google.com/youtube/v3)

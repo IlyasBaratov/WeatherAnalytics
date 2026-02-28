@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "F5: Backend + Frontend",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "backEnd.main:app",
+        "--reload",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true,
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Frontend: http.server (3000)",
+      "serverReadyAction": {
+        "pattern": "Uvicorn running on.*",
+        "uriFormat": "http://localhost:3000/html/index.html",
+        "action": "openExternally"
+      }
+    }
+  ]
+}

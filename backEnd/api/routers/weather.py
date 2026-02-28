@@ -24,7 +24,12 @@ def get_geocoding_service() -> GeoService:
     return GeoService()
 
 def get_youtube_service() -> YoutubeService:
-    return YoutubeService()
+    try:
+        return YoutubeService()
+    except Exception as e:
+        print(f"YouTube disabled (service init failed): {type(e).__name__}: {str(e)}")
+        # Return a service instance that will produce an empty result.
+        return YoutubeService(client=None)
 
 
 @router.get("/summary")

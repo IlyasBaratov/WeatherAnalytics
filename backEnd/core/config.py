@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     default_lat: float = Field(47.6061, env = "DEFAULT_LAT")
     default_lon: float = Field(-122.3328, env = "DEFAULT_LON")
     units: str = Field("metric", env="WEATHER_UNITS")
-    youtube_api_key: str = Field("", alias="API_YOUTUBE_KEY")
+    youtube_api_key: str = Field("", env="API_YOUTUBE_KEY")
     class Config:
         env_file = ".env"
         case_sensitive = False

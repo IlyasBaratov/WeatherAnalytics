@@ -1,4 +1,3 @@
-from pyclbr import Class
 from typing import List, Dict, Any, Optional
 import httpx
 from fastapi import HTTPException
@@ -6,13 +5,16 @@ from backEnd.core.config import settings
 
 class YoutubeClient:
     def __init__(self, api_key: Optional[str] = None, base_url: str = "https://www.googleapis.com/youtube/v3"):
-        cfg_key = getattr(settings, "youtube_api_key", None)
-        self.api_key = api_key or cfg_key
+        self.api_key = api_key or getattr(settings, "youtube_api_key", None)
         self.base_url = base_url
 
-        if not self.api_key:
-            raise  RuntimeError("Youtube API key is not set.")
+        # IMPORTANT:
+        # Do not raise on missing API key in __init__.
+        # This client is created as a FastAPI dependency for a best-effort feature.
+        # If we raise here, it turns unrelated endpoints into HTTP 500s.
     async def get(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        if not self.api_key:
+            raise HTTPException(status_code=503, detail="YouTube API key is not configured")
         url = f"{self.base_url}/{endpoint}"
         params = {**params, "key": self.api_key}
         timeout = httpx.Timeout(settings.api_timeout)

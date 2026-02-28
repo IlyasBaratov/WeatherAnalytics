@@ -8,8 +8,8 @@
 |---------|-----|---------|
 | **Frontend** | https://weatherdemo.online | Main web interface |
 | **API Base** | https://api.weatherdemo.online | Backend API endpoints |
-| **API Docs (Swagger)** | https://api.weatherdemo.online/docs | Interactive API documentation |
-| **API Docs (ReDoc)** | https://api.weatherdemo.online/redoc | Alternative API documentation |
+| **API Docs (Swagger)** | https://api.weatherdemo.online/api/docs | Interactive API documentation |
+| **API Docs (ReDoc)** | https://api.weatherdemo.online/api/redoc | Alternative API documentation |
 
 ---
 
@@ -403,7 +403,7 @@ data.videos?.forEach(video => {
 ## 🎯 Quick Start Checklist
 
 - [ ] Visit https://weatherdemo.online
-- [ ] Test API at https://api.weatherdemo.online/docs
+- [ ] Test API at https://api.weatherdemo.online/api/docs
 - [ ] Try weather summary: `curl "https://api.weatherdemo.online/api/weather/summary?q=Seattle"`
 - [ ] Check video integration in response
 - [ ] Test date range: `curl "https://api.weatherdemo.online/api/weather/forecast/range?start_date=2025-11-15&end_date=2025-11-20"`

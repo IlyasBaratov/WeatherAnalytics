@@ -1,5 +1,13 @@
-    const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
-// const API_BASE_URL = 'http://localhost:8000/api/weather';
+// When UI and API are hosted together (single container), use same-origin.
+const PROD_API_BASE_URL = '/api/weather';
+const LOCAL_API_BASE_URL = 'http://localhost:8000/api/weather';
+
+const ENV_API_BASE_URL = (window.__ENV__ && window.__ENV__.API_BASE_URL) ? window.__ENV__.API_BASE_URL : '';
+
+const API_BASE_URL =
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? LOCAL_API_BASE_URL
+    : (ENV_API_BASE_URL || PROD_API_BASE_URL);
 
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
