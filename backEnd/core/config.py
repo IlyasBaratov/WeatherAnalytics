@@ -1,19 +1,24 @@
-from typing import Optional
-#checking API
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 class Settings(BaseSettings):
-    api_weather_key: str = Field("", env="API_WEATHER_KEY")
-    api_ski_key: str = Field("", env="API_SKI_KEY")
+    # Pydantic Settings v2 uses `model_config` (not inner `Config`) for .env loading.
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
+    api_weather_key: str = Field(default="", validation_alias="API_WEATHER_KEY")
+    api_ski_key: str = Field(default="", validation_alias="API_SKI_KEY")
+    youtube_api_key: str = Field(default="", validation_alias="API_YOUTUBE_KEY")
+
     # Timeout (seconds) to use for upstream API requests
-    api_timeout: float = Field(10.0, env="API_TIMEOUT")
-    default_lat: float = Field(47.6061, env = "DEFAULT_LAT")
-    default_lon: float = Field(-122.3328, env = "DEFAULT_LON")
-    units: str = Field("metric", env="WEATHER_UNITS")
-    youtube_api_key: str = Field("", env="API_YOUTUBE_KEY")
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
+    api_timeout: float = Field(default=10.0, validation_alias="API_TIMEOUT")
+    default_lat: float = Field(default=47.6061, validation_alias="DEFAULT_LAT")
+    default_lon: float = Field(default=-122.3328, validation_alias="DEFAULT_LON")
+    units: str = Field(default="metric", validation_alias="WEATHER_UNITS")
+
+
 settings = Settings()
