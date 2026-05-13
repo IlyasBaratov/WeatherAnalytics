@@ -2,6 +2,15 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "F5: Deploy (deploy.ps1)",
+      "type": "PowerShell",
+      "request": "launch",
+      "script": "${workspaceFolder}/deploy.ps1",
+      "cwd": "${workspaceFolder}",
+      "args": [],
+      "createTemporaryIntegratedConsole": true
+    },
+    {
       "name": "F5: Backend + Frontend",
       "type": "python",
       "request": "launch",
