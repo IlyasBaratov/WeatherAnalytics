@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -85,13 +85,14 @@
             <p class="stat__value" id="precip">--</p>
           </div>
         </section>
+
         <article class="weather-brief card" id="weatherBrief">
           <div class="weather-brief__head">
             <div>
-              <p class="weather-brief__eyebrow" id="briefSource">AI summary</p>
+              <p class="weather-brief__eyebrow" id="briefSource">Gemini AI Summary</p>
               <h3>AI Weather Brief</h3>
             </div>
-            <span class="weather-brief__badge" id="briefSeverity">Low</span>
+            <span class="weather-brief__badge" id="briefSeverity">Moderate</span>
           </div>
           <p class="weather-brief__headline" id="briefHeadline">Search a place to generate a risk brief.</p>
           <div class="weather-brief__grid">
@@ -109,6 +110,7 @@
             </div>
           </div>
         </article>
+
         <section class="daily card">
           <h3 class="section-title">Daily Forecast</h3>
           <ul class="daily__list" id="dailyList"></ul>
@@ -212,7 +214,7 @@ if (compactSearchIcon) {
 
 // Theme Management
 function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
+  const savedTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
 }
 
