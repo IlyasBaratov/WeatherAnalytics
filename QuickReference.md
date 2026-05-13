@@ -6,9 +6,9 @@
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| **Frontend** | https://weatherdemo.online | Main web interface |
-| **API Base** | https://api.weatherdemo.online | Backend API endpoints |
-| **API Docs (Swagger)** | https://api.weatherdemo.online/api/docs | Interactive API documentation |
+| **Frontend** | https://app-weather-analytics.azurewebsites.net/ | Main web interface |
+| **API Base** | https://app-weather-analytics.azurewebsites.net/ | Backend API endpoints |
+| **API Docs (Swagger)** | https://app-weather-analytics.azurewebsites.net/api/docs | Interactive API documentation |
 | **API Docs (ReDoc)** | https://api.weatherdemo.online/api/redoc | Alternative API documentation |
 
 ---
