@@ -85,6 +85,30 @@
             <p class="stat__value" id="precip">--</p>
           </div>
         </section>
+        <article class="weather-brief card" id="weatherBrief">
+          <div class="weather-brief__head">
+            <div>
+              <p class="weather-brief__eyebrow" id="briefSource">AI summary</p>
+              <h3>AI Weather Brief</h3>
+            </div>
+            <span class="weather-brief__badge" id="briefSeverity">Low</span>
+          </div>
+          <p class="weather-brief__headline" id="briefHeadline">Search a place to generate a risk brief.</p>
+          <div class="weather-brief__grid">
+            <div class="weather-brief__section">
+              <h4>Key risks</h4>
+              <ul id="briefRisks"></ul>
+            </div>
+            <div class="weather-brief__section">
+              <h4>What changes</h4>
+              <ul id="briefChanges"></ul>
+            </div>
+            <div class="weather-brief__section">
+              <h4>Simple actions</h4>
+              <ul id="briefActions"></ul>
+            </div>
+          </div>
+        </article>
         <section class="daily card">
           <h3 class="section-title">Daily Forecast</h3>
           <ul class="daily__list" id="dailyList"></ul>
@@ -123,16 +147,10 @@
 <!--  src="../js/app.js"-->
   <script src="/env.js"></script>
   <script >
-      // const API_BASE_URL = 'https://api.weatherdemo.online/api/weather';
-const DEFAULT_LOCAL_API_BASE_URL = 'http://localhost:8000/api/weather';
-const DEFAULT_PROD_API_BASE_URL = 'https://app-weather-analytics-api-wus2.azurewebsites.net/api/weather';
-
 const API_BASE_URL =
   (window.__ENV__ && window.__ENV__.API_BASE_URL)
     ? window.__ENV__.API_BASE_URL
-    : ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? DEFAULT_LOCAL_API_BASE_URL
-        : DEFAULT_PROD_API_BASE_URL);
+    : '/api/weather';
 const header = document.querySelector('.site-header');
 const compactSearchIcon = document.querySelector('.compact-search-icon');
 const unitSelect = document.getElementById('unitSelect');
@@ -293,6 +311,7 @@ function renderWeather(data) {
     document.getElementById('humidity').textContent = `${data.current?.humidity || '--'}%`;
     document.getElementById('wind').textContent = data.current?.wind || '--';
     document.getElementById('precip').textContent = data.current?.precip || '--';
+    renderWeatherBrief(data.insight);
 
   const dailyList = document.getElementById('dailyList');
   dailyList.innerHTML = '';
@@ -364,6 +383,49 @@ function renderWeather(data) {
   }
 
   weatherContent.style.display = 'block';
+}
+
+function renderWeatherBrief(insight) {
+  const severityEl = document.getElementById('briefSeverity');
+  const sourceEl = document.getElementById('briefSource');
+  const headlineEl = document.getElementById('briefHeadline');
+  const risksEl = document.getElementById('briefRisks');
+  const changesEl = document.getElementById('briefChanges');
+  const actionsEl = document.getElementById('briefActions');
+
+  if (!severityEl || !headlineEl || !risksEl || !changesEl || !actionsEl) {
+    return;
+  }
+
+  const fallback = {
+    severity: 'low',
+    headline: 'Forecast brief is not available for this location yet.',
+    risks: ['No risk details returned by the weather service.'],
+    changes: ['Check the hourly forecast for upcoming changes.'],
+    actions: ['Refresh the forecast before heading out.']
+  };
+  const brief = insight || fallback;
+  const severity = (brief.severity || 'low').toLowerCase();
+
+  severityEl.textContent = severity.charAt(0).toUpperCase() + severity.slice(1);
+  severityEl.className = `weather-brief__badge weather-brief__badge--${severity}`;
+  if (sourceEl) {
+    sourceEl.textContent = brief.source === 'gemini' ? 'Gemini AI summary' : 'Forecast summary';
+  }
+  headlineEl.textContent = brief.headline || fallback.headline;
+
+  renderBriefList(risksEl, brief.risks || fallback.risks);
+  renderBriefList(changesEl, brief.changes || fallback.changes);
+  renderBriefList(actionsEl, brief.actions || fallback.actions);
+}
+
+function renderBriefList(container, items) {
+  container.innerHTML = '';
+  items.slice(0, 3).forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    container.appendChild(li);
+  });
 }
 
 async function loadFavorites() {

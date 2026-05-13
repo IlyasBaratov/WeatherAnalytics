@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     api_weather_key: str = Field(default="", validation_alias="API_WEATHER_KEY")
     api_ski_key: str = Field(default="", validation_alias="API_SKI_KEY")
     youtube_api_key: str = Field(default="", validation_alias="API_YOUTUBE_KEY")
+    api_gemini_ai_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("API_GEMINI_AI_KEY", "GEMINI_API_KEY"),
+    )
+    gemini_model: str = Field(default="gemini-2.5-flash", validation_alias="GEMINI_MODEL")
 
     # Timeout (seconds) to use for upstream API requests
     api_timeout: float = Field(default=10.0, validation_alias="API_TIMEOUT")
