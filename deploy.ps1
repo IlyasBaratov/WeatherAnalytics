@@ -28,9 +28,11 @@ Optional overrides:
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $false)]
+  # Target subscription (matches portal link)
   [string]$SubscriptionId = "6767198a-fc97-4598-b7f4-17496c2cc64e",
 
   [Parameter(Mandatory = $false)]
+  # Target resource group (matches portal link)
   [string]$ResourceGroup = "rg-app-weather-analytics",
 
   [Parameter(Mandatory = $false)]
@@ -58,6 +60,14 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# Be tolerant of accidental whitespace in arguments/defaults.
+$SubscriptionId = $SubscriptionId.Trim()
+$ResourceGroup = $ResourceGroup.Trim()
+$AcrName = $AcrName.Trim()
+$Tag = $Tag.Trim()
+$WebAppName = $WebAppName.Trim()
+$ImageRepository = $ImageRepository.Trim()
+
 function Invoke-Az {
   param(
     [Parameter(Mandatory = $true)]
@@ -69,6 +79,21 @@ function Invoke-Az {
     $argText = ($Args -join ' ')
     throw "Azure CLI command failed (exit $LASTEXITCODE): az $argText"
   }
+}
+
+function Get-AcrBuildAuthHelp {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$AcrName
+  )
+
+  return @(
+    "ACR build could not push the resulting image.",
+    "Common fixes:",
+    "- Ensure you're logged into the correct tenant/subscription: az login --tenant <tenant>; az account set -s <subscription>",
+    "- Ensure your user has 'AcrPush' (or Owner/Contributor) on the registry '$AcrName'", 
+    "- If you must use admin credentials: az acr update -n $AcrName --admin-enabled true (not recommended for production)"
+  ) -join [Environment]::NewLine
 }
 
 function Assert-CommandExists {
@@ -168,6 +193,15 @@ Write-Host "Using image repo: $ImageRepository"
 Write-Host "Setting active subscription..."
 Invoke-Az -Args @('account','set','-s',$SubscriptionId) | Out-Null
 
+Write-Host "Preflight: checking RG/ACR/WebApp exist..."
+Invoke-Az -Args @('group','show','-n',$ResourceGroup,'-o','none') | Out-Null
+Invoke-Az -Args @('acr','show','-g',$ResourceGroup,'-n',$AcrName,'-o','none') | Out-Null
+if (-not [string]::IsNullOrWhiteSpace($WebAppName)) {
+  Invoke-Az -Args @('webapp','show','-g',$ResourceGroup,'-n',$WebAppName,'-o','none') | Out-Null
+} else {
+  Write-Host "WebAppName empty: will skip webapp restart." -ForegroundColor Yellow
+}
+
 # Fast path: ACR login server is typically <registryName>.azurecr.io
 $acrLoginServer = ("{0}.azurecr.io" -f $AcrName)
 
@@ -197,8 +231,12 @@ if ($ForceRebuildBase -or -not $baseExists) {
       '-f','Dockerfile.base','.'
     )
   } catch {
-    if ($_.Exception.Message -match 'TasksOperationsNotAllowed') {
+    $msg = $_.Exception.Message
+    if ($msg -match 'TasksOperationsNotAllowed') {
       throw "ACR Tasks are not permitted for '$AcrName' in subscription '$SubscriptionId'. This blocks 'az acr build'. You will need to (1) request enabling ACR Tasks / remove policy restriction, or (2) build images elsewhere (e.g., GitHub Actions) and push to ACR. Original error: $($_.Exception.Message)"
+    }
+    if ($msg -match 'at least one credential is required|authentication required|when specifying push|unauthorized|DENIED|401|403') {
+      throw (Get-AcrBuildAuthHelp -AcrName $AcrName)
     }
     throw
   }
@@ -217,8 +255,12 @@ try {
     '-f','Dockerfile','.'
   )
 } catch {
-  if ($_.Exception.Message -match 'TasksOperationsNotAllowed') {
+  $msg = $_.Exception.Message
+  if ($msg -match 'TasksOperationsNotAllowed') {
     throw "ACR Tasks are not permitted for '$AcrName' in subscription '$SubscriptionId'. This blocks 'az acr build'. You will need to (1) request enabling ACR Tasks / remove policy restriction, or (2) build images elsewhere (e.g., GitHub Actions) and push to ACR. Original error: $($_.Exception.Message)"
+  }
+  if ($msg -match 'at least one credential is required|authentication required|when specifying push|unauthorized|DENIED|401|403') {
+    throw (Get-AcrBuildAuthHelp -AcrName $AcrName)
   }
   throw
 }
@@ -227,6 +269,8 @@ Write-Host "Build/push complete. App Service update skipped (by design)." -Foreg
 Write-Host "App image:  $fullImageName"
 Write-Host "Base image: $fullBaseImageName"
 
-Write-Host "Restarting web app..."
-Invoke-Az -Args @('webapp','restart','-g',$ResourceGroup,'-n',$WebAppName,'-o','none') | Out-Null
-Write-Host "Restart requested." -ForegroundColor Green
+if (-not [string]::IsNullOrWhiteSpace($WebAppName)) {
+  Write-Host "Restarting web app..."
+  Invoke-Az -Args @('webapp','restart','-g',$ResourceGroup,'-n',$WebAppName,'-o','none') | Out-Null
+  Write-Host "Restart requested." -ForegroundColor Green
+}
