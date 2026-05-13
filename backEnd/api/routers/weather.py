@@ -3,6 +3,7 @@ from fastapi import APIRouter, Query, Depends
 from backEnd.services.weather_service import WeatherService
 from backEnd.services.geo_service import GeoService
 from backEnd.core.config import settings
+from backEnd.core.auth import get_current_user
 from fastapi import Body, HTTPException, status
 from pydantic import BaseModel, Field
 from datetime import date, datetime, timedelta
@@ -14,7 +15,7 @@ import asyncio
 from backEnd.services.gemini_service import GeminiService
 from backEnd.services.youtube_service import YoutubeService
 
-from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
+from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite, User
 
 router = APIRouter(prefix="/api/weather", tags=["weather"])
 
@@ -208,7 +209,7 @@ def db_store_forecasts(db: Session, location: Location, provider: Provider, data
 
 
 @router.post("/requests", status_code=201)
-async def create_request(body: CreateRequestBody, wx: WeatherService = Depends(get_weather_service), geo: GeoService = Depends(get_geocoding_service), db: Session = Depends(get_db)):
+async def create_request(body: CreateRequestBody, wx: WeatherService = Depends(get_weather_service), geo: GeoService = Depends(get_geocoding_service), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     validate_date_range(body.start_date, body.end_date)
 
     # Resolve location
@@ -237,7 +238,7 @@ async def create_request(body: CreateRequestBody, wx: WeatherService = Depends(g
     req = await run_in_threadpool(
         db_create_request,
         db,
-        None,
+        str(user.id),
         str(location.id),
         str(provider.id),
         body.q or f"{lat},{lon}",
@@ -250,9 +251,9 @@ async def create_request(body: CreateRequestBody, wx: WeatherService = Depends(g
 
 
 @router.get("/requests")
-async def list_requests(db: Session = Depends(get_db)):
+async def list_requests(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _list(db: Session):
-        rows = db.query(RequestModel).order_by(RequestModel.created_at.desc()).all()
+        rows = db.query(RequestModel).filter(RequestModel.user_id == str(user.id)).order_by(RequestModel.created_at.desc()).all()
         return [
             {
                 "id": r.id,
@@ -268,9 +269,9 @@ async def list_requests(db: Session = Depends(get_db)):
 
 
 @router.get("/requests/{request_id}")
-async def get_request(request_id: str, db: Session = Depends(get_db)):
+async def get_request(request_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _get(db: Session):
-        r = db.query(RequestModel).filter(RequestModel.id == request_id).first()
+        r = db.query(RequestModel).filter(RequestModel.id == request_id, RequestModel.user_id == user.id).first()
         if not r:
             return None
         # return forecasts stored for location in that date range
@@ -284,9 +285,9 @@ async def get_request(request_id: str, db: Session = Depends(get_db)):
 
 
 @router.delete("/requests/{request_id}", status_code=204)
-async def delete_request(request_id: str, db: Session = Depends(get_db)):
+async def delete_request(request_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _delete(db: Session):
-        r = db.query(RequestModel).filter(RequestModel.id == request_id).first()
+        r = db.query(RequestModel).filter(RequestModel.id == request_id, RequestModel.user_id == user.id).first()
         if not r:
             return False
         db.delete(r)
@@ -306,7 +307,7 @@ class FavoriteBody(BaseModel):
 
 
 @router.post("/favorites", status_code=201)
-async def create_favorite(body: FavoriteBody, geo: GeoService = Depends(get_geocoding_service), db: Session = Depends(get_db)):
+async def create_favorite(body: FavoriteBody, geo: GeoService = Depends(get_geocoding_service), db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     # resolve location
     if body.q:
         resolved = await geo.resolve_coords_from_query(body.q)
@@ -322,10 +323,12 @@ async def create_favorite(body: FavoriteBody, geo: GeoService = Depends(get_geoc
     location = await run_in_threadpool(db_get_or_create_location, db, lat, lon, place)
 
     def _create(db: Session):
-        fav = Favorite(user_id=None, location_id=location.id)
-        db.add(fav)
-        db.commit()
-        db.refresh(fav)
+        fav = db.query(Favorite).filter(Favorite.user_id == user.id, Favorite.location_id == location.id).first()
+        if not fav:
+            fav = Favorite(user_id=user.id, location_id=location.id)
+            db.add(fav)
+            db.commit()
+            db.refresh(fav)
         return {
             "id": fav.id,
             "location_id": fav.location_id,
@@ -338,11 +341,12 @@ async def create_favorite(body: FavoriteBody, geo: GeoService = Depends(get_geoc
 
 
 @router.get("/favorites")
-async def list_favorites(db: Session = Depends(get_db)):
+async def list_favorites(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _list(db: Session):
         rows = (
             db.query(Favorite, Location)
             .join(Location, Favorite.location_id == Location.id)
+            .filter(Favorite.user_id == user.id)
             .order_by(Favorite.created_at.desc())
             .all()
         )
@@ -361,9 +365,9 @@ async def list_favorites(db: Session = Depends(get_db)):
 
 
 @router.delete("/favorites/{fav_id}", status_code=204)
-async def delete_favorite(fav_id: str, db: Session = Depends(get_db)):
+async def delete_favorite(fav_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _delete(db: Session):
-        f = db.query(Favorite).filter(Favorite.id == fav_id).first()
+        f = db.query(Favorite).filter(Favorite.id == fav_id, Favorite.user_id == user.id).first()
         if not f:
             return False
         db.delete(f)
@@ -435,7 +439,7 @@ class UpdateForecastBody(BaseModel):
 
 
 @router.patch("/forecasts/{forecast_id}")
-async def update_forecast(forecast_id: str, body: UpdateForecastBody, db: Session = Depends(get_db)):
+async def update_forecast(forecast_id: str, body: UpdateForecastBody, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _update(db: Session):
         f = db.query(WeatherForecast).filter(WeatherForecast.id == forecast_id).first()
         if not f:
@@ -460,7 +464,7 @@ async def update_forecast(forecast_id: str, body: UpdateForecastBody, db: Sessio
 
 
 @router.delete("/forecasts/{forecast_id}", status_code=204)
-async def delete_forecast(forecast_id: str, db: Session = Depends(get_db)):
+async def delete_forecast(forecast_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     def _delete(db: Session):
         f = db.query(WeatherForecast).filter(WeatherForecast.id == forecast_id).first()
         if not f:
@@ -484,7 +488,7 @@ class UpdateRequestBody(BaseModel):
 
 
 @router.patch("/requests/{request_id}")
-async def update_request(request_id: str, body: UpdateRequestBody, db: Session = Depends(get_db)):
+async def update_request(request_id: str, body: UpdateRequestBody, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     # validate date range if provided
     if body.start_date and body.end_date:
         validate_date_range(body.start_date, body.end_date)
@@ -495,7 +499,7 @@ async def update_request(request_id: str, body: UpdateRequestBody, db: Session =
         raise HTTPException(status_code=400, detail="status must be one of: pending, ok, error")
 
     def _update(db: Session):
-        r = db.query(RequestModel).filter(RequestModel.id == request_id).first()
+        r = db.query(RequestModel).filter(RequestModel.id == request_id, RequestModel.user_id == user.id).first()
         if not r:
             return None
         if body.start_date is not None:

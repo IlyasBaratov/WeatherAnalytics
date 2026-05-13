@@ -7,8 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
 from starlette.requests import Request
+from sqlalchemy import inspect, text
 
-from backEnd.api.routers import weather, ski, pages
+from backEnd.api.routers import weather, ski, pages, auth
 from backEnd.core.database import engine, Base
 # --- paths ---
 BASE_DIR = pathlib.Path(__file__).resolve().parent
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 
 # Include API routers
+app.include_router(auth.router)
 app.include_router(weather.router)
 app.include_router(ski.router)
 
@@ -62,6 +64,15 @@ async def env_js() -> Response:
 def on_startup():
     # create DB tables if they don't exist (local dev convenience)
     Base.metadata.create_all(bind=engine)
+    ensure_auth_columns()
+
+
+def ensure_auth_columns():
+    inspector = inspect(engine)
+    user_columns = {column["name"] for column in inspector.get_columns("users")}
+    if "password_hash" not in user_columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN password_hash TEXT"))
 @app.on_event("shutdown")
 async def on_shutdown():
     await ski.cleanup_ski_service()

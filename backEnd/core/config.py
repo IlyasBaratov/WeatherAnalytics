@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     default_lat: float = Field(default=47.6061, validation_alias="DEFAULT_LAT")
     default_lon: float = Field(default=-122.3328, validation_alias="DEFAULT_LON")
     units: str = Field(default="metric", validation_alias="WEATHER_UNITS")
+    auth_secret_key: str = Field(default="", validation_alias="AUTH_SECRET_KEY")
+    auth_token_expire_minutes: int = Field(default=1440, validation_alias="AUTH_TOKEN_EXPIRE_MINUTES")
 
 
 settings = Settings()

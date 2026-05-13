@@ -38,6 +38,19 @@
               <span class="compact-search-icon">🔍</span>
         </form>
       </div>
+      <div class="auth-widget" id="authWidget">
+        <div class="auth-widget__user" id="authUser" style="display: none;">
+          <span id="authUserName"></span>
+          <button class="btn btn--secondary btn--small" id="logoutBtn" type="button">Sign out</button>
+        </div>
+        <form class="auth-form" id="authForm">
+          <input class="auth-form__input" type="email" id="authEmail" placeholder="Email" autocomplete="email" required />
+          <input class="auth-form__input" type="password" id="authPassword" placeholder="Password" autocomplete="current-password" required minlength="8" />
+          <button class="btn btn--secondary btn--small" id="loginBtn" type="submit">Sign in</button>
+          <button class="btn btn--primary btn--small" id="registerBtn" type="button">Create account</button>
+        </form>
+        <p class="auth-widget__status" id="authStatus"></p>
+      </div>
       <div class="theme-toggle" id="themeToggle"></div>
     </div>
   </header>
@@ -153,6 +166,7 @@ const API_BASE_URL =
   (window.__ENV__ && window.__ENV__.API_BASE_URL)
     ? window.__ENV__.API_BASE_URL
     : '/api/weather';
+const API_ROOT_URL = API_BASE_URL.replace(/\/weather\/?$/, '') || '/api';
 const header = document.querySelector('.site-header');
 const compactSearchIcon = document.querySelector('.compact-search-icon');
 const unitSelect = document.getElementById('unitSelect');
@@ -165,8 +179,18 @@ const favoritesList = document.getElementById('favoritesList');
 const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
 const themeToggle = document.getElementById('themeToggle');
 const daysSelect = document.getElementById('daysSelect');
+const authWidget = document.getElementById('authWidget');
+const authForm = document.getElementById('authForm');
+const authUser = document.getElementById('authUser');
+const authUserName = document.getElementById('authUserName');
+const authEmail = document.getElementById('authEmail');
+const authPassword = document.getElementById('authPassword');
+const authStatus = document.getElementById('authStatus');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn = document.getElementById('logoutBtn');
 
 let currentPlace = null;
+let currentUser = null;
 
 unitSelect.value = localStorage.getItem('unit') || 'metric';
 unitSelect.addEventListener('change', () => {
@@ -228,6 +252,7 @@ themeToggle.addEventListener('click', () => {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initAuth();
   loadWeather();
   loadFavorites();
 
@@ -243,9 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   saveFavoriteBtn.addEventListener('click', async () => {
     try {
+      if (!getAuthToken()) {
+        setAuthStatus('Sign in to save favorites.');
+        authEmail.focus();
+        return;
+      }
       const q = (searchInput.value && searchInput.value.trim()) || currentPlace;
       if (!q) return;
-      const res = await fetch(`${API_BASE_URL}/favorites`, {
+      const res = await authFetch(`${API_BASE_URL}/favorites`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ q })
@@ -258,6 +288,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+function getAuthToken() {
+  return localStorage.getItem('authToken') || '';
+}
+
+function setAuthSession(payload) {
+  localStorage.setItem('authToken', payload.access_token);
+  currentUser = payload.user;
+  renderAuthState();
+}
+
+function clearAuthSession() {
+  localStorage.removeItem('authToken');
+  currentUser = null;
+  renderAuthState();
+  renderFavorites([]);
+}
+
+function setAuthStatus(message) {
+  authStatus.textContent = message || '';
+}
+
+async function authFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  const token = getAuthToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  return fetch(url, { ...options, headers });
+}
+
+async function initAuth() {
+  authForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await submitAuth('login');
+  });
+
+  registerBtn.addEventListener('click', async () => {
+    await submitAuth('register');
+  });
+
+  logoutBtn.addEventListener('click', () => {
+    clearAuthSession();
+    setAuthStatus('Signed out.');
+  });
+
+  const token = getAuthToken();
+  if (!token) {
+    renderAuthState();
+    return;
+  }
+
+  try {
+    const res = await authFetch(`${API_ROOT_URL}/auth/me`);
+    if (!res.ok) throw new Error('Session expired');
+    currentUser = await res.json();
+  } catch (error) {
+    localStorage.removeItem('authToken');
+    currentUser = null;
+  }
+  renderAuthState();
+}
+
+async function submitAuth(mode) {
+  setAuthStatus('');
+  try {
+    const res = await fetch(`${API_ROOT_URL}/auth/${mode === 'register' ? 'register' : 'login'}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: authEmail.value.trim(),
+        password: authPassword.value
+      })
+    });
+    const payload = await res.json();
+    if (!res.ok) throw new Error(payload.detail || 'Authentication failed');
+    setAuthSession(payload);
+    authPassword.value = '';
+    setAuthStatus(mode === 'register' ? 'Account created.' : 'Signed in.');
+    await loadFavorites();
+  } catch (error) {
+    setAuthStatus(error.message);
+  }
+}
+
+function renderAuthState() {
+  if (currentUser) {
+    authForm.style.display = 'none';
+    authUser.style.display = 'flex';
+    authUserName.textContent = currentUser.display_name || currentUser.email;
+    saveFavoriteBtn.disabled = false;
+  } else {
+    authForm.style.display = 'flex';
+    authUser.style.display = 'none';
+    saveFavoriteBtn.disabled = true;
+  }
+}
 
 //       NEW END
 
@@ -431,8 +558,19 @@ function renderBriefList(container, items) {
 }
 
 async function loadFavorites() {
+  if (!getAuthToken()) {
+    renderFavorites([]);
+    setAuthStatus('Sign in to load favorites.');
+    return;
+  }
+
   try {
-    const res = await fetch(`${API_BASE_URL}/favorites`);
+    const res = await authFetch(`${API_BASE_URL}/favorites`);
+    if (res.status === 401) {
+      clearAuthSession();
+      setAuthStatus('Session expired. Sign in again.');
+      return;
+    }
     if (!res.ok) throw new Error('Failed to load favorites');
     const items = await res.json();
     renderFavorites(items);
@@ -484,7 +622,7 @@ function renderFavorites(items) {
 
 async function deleteFavorite(id) {
   try {
-    const res = await fetch(`${API_BASE_URL}/favorites/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API_BASE_URL}/favorites/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete favorite');
   } catch (err) {
     console.error(err);

@@ -22,6 +22,7 @@ class User(Base):
     id = Column(String(36), primary_key=True, default=gen_uuid)
     email = Column(Text, unique=True, nullable=True)
     display_name = Column(Text, nullable=True)
+    password_hash = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
