@@ -11,6 +11,7 @@ from backEnd.core.database import get_db
 from sqlalchemy.orm import Session
 import json
 import asyncio
+from backEnd.services.gemini_service import GeminiService
 from backEnd.services.youtube_service import YoutubeService
 
 from backEnd.models.model import Provider, Location, Request as RequestModel, WeatherForecast, Favorite
@@ -32,6 +33,10 @@ def get_youtube_service() -> YoutubeService:
         return YoutubeService(client=None)
 
 
+def get_gemini_service() -> GeminiService:
+    return GeminiService()
+
+
 @router.get("/summary")
 async def summary(
     q: Optional[str] = Query(None),
@@ -42,9 +47,14 @@ async def summary(
     wx: WeatherService = Depends(get_weather_service),
     geo: GeoService = Depends(get_geocoding_service),
     yt: YoutubeService = Depends(get_youtube_service),
+    ai: GeminiService = Depends(get_gemini_service),
 ):
     if q:
-        resolved = await geo.resolve_coords_from_query(q)
+        try:
+            resolved = await geo.resolve_coords_from_query(q)
+        except HTTPException as e:
+            print(f"Geocoding lookup failed for query '{q}': {e.detail}")
+            resolved = None
         if resolved:
             lat, lon, place = resolved
         else:
@@ -53,7 +63,11 @@ async def summary(
     else:
         lat = lat or settings.default_lat
         lon = lon or settings.default_lon
-        place = await geo.resolve_place_from_coords(lat, lon)
+        try:
+            place = await geo.resolve_place_from_coords(lat, lon)
+        except HTTPException as e:
+            print(f"Reverse geocoding failed for {lat}, {lon}: {e.detail}")
+            place = None
 
     # Prepare a best-effort city/country guess from resolved `place` or query for the video call.
     city_guess = None
@@ -72,8 +86,17 @@ async def summary(
 
     # Wait for weather data (primary). build_context may be CPU-bound; run it in threadpool.
     data = await fetch_task
-    ctx = await run_in_threadpool(wx.build_context, data, max_days=days)
+    ctx = await run_in_threadpool(wx.build_context, data, max_days=days, units=units)
     ctx["place"] = place or ctx.get("place") or f"{lat:.4f}, {lon:.4f}"
+    ctx["insight"]["source"] = "rules"
+
+    if ai.enabled:
+        try:
+            ai_insight = await asyncio.wait_for(ai.generate_weather_insight(ctx), timeout=8.0)
+            if ai_insight:
+                ctx["insight"] = ai_insight
+        except Exception as e:
+            print(f"Gemini weather summary unavailable: {type(e).__name__}")
 
     # Extract a more accurate city/country from the final context `place` if available.
     city_name = None

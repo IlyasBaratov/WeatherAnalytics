@@ -5,7 +5,7 @@ from backEnd.core.config import settings
 
 
 class GeoClient:
-    def __init__(self, base_url: str = "http://api.openweathermap.org/geo/1.0"):
+    def __init__(self, base_url: str = "https://api.openweathermap.org/geo/1.0"):
         self.base_url = base_url
 
     async def get(self, path: str, params: Dict[str, Any]) -> Any:

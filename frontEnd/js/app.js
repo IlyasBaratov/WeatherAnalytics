@@ -1,13 +1,6 @@
-// When UI and API are hosted together (single container), use same-origin.
-const PROD_API_BASE_URL = '/api/weather';
-const LOCAL_API_BASE_URL = 'http://localhost:8000/api/weather';
-
 const ENV_API_BASE_URL = (window.__ENV__ && window.__ENV__.API_BASE_URL) ? window.__ENV__.API_BASE_URL : '';
 
-const API_BASE_URL =
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? LOCAL_API_BASE_URL
-    : (ENV_API_BASE_URL || PROD_API_BASE_URL);
+const API_BASE_URL = ENV_API_BASE_URL || '/api/weather';
 
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
@@ -23,7 +16,7 @@ let currentPlace = null;
 
 // Theme Management
 function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'light';
+  const savedTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
 }
 
@@ -117,6 +110,7 @@ function renderWeather(data) {
   document.getElementById('humidity').textContent = `${data.current?.humidity || '--'}%`;
   document.getElementById('wind').textContent = data.current?.wind || '--';
   document.getElementById('precip').textContent = data.current?.precip || '--';
+  renderWeatherBrief(data.insight);
 
   const dailyList = document.getElementById('dailyList');
   dailyList.innerHTML = '';
@@ -188,6 +182,49 @@ function renderWeather(data) {
   }
 
   weatherContent.style.display = 'block';
+}
+
+function renderWeatherBrief(insight) {
+  const severityEl = document.getElementById('briefSeverity');
+  const sourceEl = document.getElementById('briefSource');
+  const headlineEl = document.getElementById('briefHeadline');
+  const risksEl = document.getElementById('briefRisks');
+  const changesEl = document.getElementById('briefChanges');
+  const actionsEl = document.getElementById('briefActions');
+
+  if (!severityEl || !headlineEl || !risksEl || !changesEl || !actionsEl) {
+    return;
+  }
+
+  const fallback = {
+    severity: 'low',
+    headline: 'Forecast brief is not available for this location yet.',
+    risks: ['No risk details returned by the weather service.'],
+    changes: ['Check the hourly forecast for upcoming changes.'],
+    actions: ['Refresh the forecast before heading out.']
+  };
+  const brief = insight || fallback;
+  const severity = (brief.severity || 'low').toLowerCase();
+
+  severityEl.textContent = severity.charAt(0).toUpperCase() + severity.slice(1);
+  severityEl.className = `weather-brief__badge weather-brief__badge--${severity}`;
+  if (sourceEl) {
+    sourceEl.textContent = brief.source === 'gemini' ? 'Gemini AI summary' : 'Forecast summary';
+  }
+  headlineEl.textContent = brief.headline || fallback.headline;
+
+  renderBriefList(risksEl, brief.risks || fallback.risks);
+  renderBriefList(changesEl, brief.changes || fallback.changes);
+  renderBriefList(actionsEl, brief.actions || fallback.actions);
+}
+
+function renderBriefList(container, items) {
+  container.innerHTML = '';
+  items.slice(0, 3).forEach(item => {
+    const li = document.createElement('li');
+    li.textContent = item;
+    container.appendChild(li);
+  });
 }
 
 async function loadFavorites() {
